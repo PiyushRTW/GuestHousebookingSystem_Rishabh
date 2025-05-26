@@ -1,0 +1,78 @@
+.login-container {
+  display: flex;
+  height: 100vh;
+  background-color: #95ab9b; /* Light yellow background */
+
+  .image-side {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #a8b5b8; /* Light cyan for image side */
+  }
+
+  .image-placeholder {
+    text-align: center;
+    font-size: 1.5em;
+    color: #4f1313;
+  }
+
+  .login-card {
+    width: 400px; /* Adjust width as needed */
+    margin: 20px; /* Add some margin around the card */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally in the card */
+    padding: 32px; /* Add some padding inside the card */
+  }
+
+.login-title {
+  color: #242a4a; /* Primary color for the heading */
+  font-size: 2.5em;
+  font-style: italic,bold;
+  font-family: 'Times New Roman', Times, serif ;
+  font-weight: 500;
+  margin-bottom: 32px; /* Increased margin-bottom */
+  text-align: center; /* Ensure title is centered */
+}
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Make form take full width of the card */
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .login-options {
+    display: flex;
+    justify-content: center; /* Center the radio buttons */
+    margin-bottom: 16px;
+  }
+
+  .login-option {
+    margin: 0 16px;
+  }
+
+  .remember-me {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    align-self: flex-start; /* Align to the left */
+  }
+
+  .mat-card-actions {
+    display: flex;
+    justify-content: center; /* Center the button */
+    margin-bottom: 24px;
+  }
+
+  .forgot-password {
+    margin-top: 16px;
+    font-size: 0.9em;
+    text-align: right;
+    width: 100%; /* Make it take full width for alignment */
+  }
+}

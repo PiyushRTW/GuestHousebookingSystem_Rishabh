@@ -1,0 +1,30 @@
+<div class="user-page-container">
+  <header class="user-header">
+    <div class="app-logo">Application logo here</div>
+    <div class="user-info">
+      <span class="username">Here username will be displayed</span>
+      <button mat-button class="logout-button">logout</button>
+    </div>
+  </header>
+
+  <aside class="user-sidebar">
+    <mat-nav-list>
+      <mat-list-item routerLink="hotels" routerLinkActive="active-link">
+        <mat-icon>hotel</mat-icon>
+        <span>Hotels</span>
+      </mat-list-item>
+      <mat-list-item routerLink="my-bookings" routerLinkActive="active-link">
+        <mat-icon>view_list</mat-icon>
+        <span>My Bookings</span>
+      </mat-list-item>
+      <mat-list-item routerLink="user-details" routerLinkActive="active-link">
+        <mat-icon>person</mat-icon>
+        <span>User Details</span>
+      </mat-list-item>
+    </mat-nav-list>
+  </aside>
+
+  <main class="user-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

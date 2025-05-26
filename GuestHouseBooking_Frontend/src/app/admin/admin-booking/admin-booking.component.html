@@ -1,0 +1,107 @@
+<div class="admin-booking-container">
+  <mat-card class="booking-card">
+    <mat-card-title>Book Room (Admin)</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="bookingForm" (ngSubmit)="bookRoom()" class="booking-form-grid">
+
+        <div class="section-title">Guest Information</div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Guest Name</mat-label>
+          <input matInput formControlName="guestName" required>
+          <mat-error *ngIf="bookingForm.get('guestName')?.hasError('required') && bookingForm.get('guestName')?.touched">
+            Guest name is required.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Guest Email</mat-label>
+          <input matInput type="email" formControlName="guestEmail" required>
+          <mat-error *ngIf="bookingForm.get('guestEmail')?.hasError('required') && bookingForm.get('guestEmail')?.touched">
+            Email is required.
+          </mat-error>
+          <mat-error *ngIf="bookingForm.get('guestEmail')?.hasError('email') && bookingForm.get('guestEmail')?.touched">
+            Enter a valid email address.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Guest Phone</mat-label>
+          <input matInput type="tel" formControlName="guestPhone" required placeholder="e.g., 1234567890">
+          <mat-error *ngIf="bookingForm.get('guestPhone')?.hasError('required') && bookingForm.get('guestPhone')?.touched">
+            Phone number is required.
+          </mat-error>
+          <mat-error *ngIf="bookingForm.get('guestPhone')?.hasError('pattern') && bookingForm.get('guestPhone')?.touched">
+            Enter a 10-digit phone number.
+          </mat-error>
+        </mat-form-field>
+
+        <div class="section-title">Booking Details</div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Guest House</mat-label>
+          <mat-select formControlName="hotelId" required>
+            <mat-option>-- Select a Guest House --</mat-option>
+            <mat-option *ngFor="let hotel of hotels" [value]="hotel.id">
+              {{ hotel.name }} ({{ hotel.address }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="bookingForm.get('hotelId')?.hasError('required') && bookingForm.get('hotelId')?.touched">
+            Guest House selection is required.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Check-in Date</mat-label>
+          <input matInput [matDatepicker]="checkInPicker" formControlName="checkInDate" readonly required>
+          <mat-datepicker-toggle matSuffix [for]="checkInPicker"></mat-datepicker-toggle>
+          <mat-datepicker #checkInPicker></mat-datepicker>
+          <mat-error *ngIf="bookingForm.get('checkInDate')?.hasError('required') && bookingForm.get('checkInDate')?.touched">
+            Check-in date is required.
+          </mat-error>
+          <mat-error *ngIf="bookingForm.get('checkInDate')?.hasError('pastDate') && bookingForm.get('checkInDate')?.touched">
+            Date cannot be in the past.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Check-out Date</mat-label>
+          <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOutDate" readonly required>
+          <mat-datepicker-toggle matSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
+          <mat-datepicker #checkOutPicker></mat-datepicker>
+          <mat-error *ngIf="bookingForm.get('checkOutDate')?.hasError('required') && bookingForm.get('checkOutDate')?.touched">
+            Check-out date is required.
+          </mat-error>
+          <mat-error *ngIf="bookingForm.get('checkOutDate')?.hasError('pastDate') && bookingForm.get('checkOutDate')?.touched">
+            Date cannot be in the past.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-error *ngIf="bookingForm.hasError('invalidDateRange') && (bookingForm.get('checkInDate')?.touched || bookingForm.get('checkOutDate')?.touched)" class="form-level-error">
+          Check-out date must be after check-in date.
+        </mat-error>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Room</mat-label>
+          <mat-select formControlName="roomId" required [disabled]="availableRooms.length === 0">
+            <mat-option>-- Select a Room --</mat-option>
+            <mat-option *ngFor="let room of availableRooms" [value]="room.id">
+              Room {{ room.roomNumber }} ({{ room.bedType | titlecase }} - ${{ room.pricePerNight }}/night)
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="bookingForm.get('roomId')?.hasError('required') && bookingForm.get('roomId')?.touched">
+            Room selection is required.
+          </mat-error>
+          <mat-hint *ngIf="bookingForm.get('hotelId')?.value && (bookingForm.get('checkInDate')?.value && bookingForm.get('checkOutDate')?.value) && availableRooms.length === 0 && !bookingForm.hasError('invalidDateRange')">
+            No rooms available for selected criteria.
+          </mat-hint>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
+            Book Room
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

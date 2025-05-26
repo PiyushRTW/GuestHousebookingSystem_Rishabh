@@ -1,0 +1,41 @@
+.rooms-container {
+  padding: 20px;
+  max-width: 600px; /* Limit width for better readability */
+  margin: 0 auto; /* Center the container */
+
+  h2 {
+    margin-bottom: 25px;
+    text-align: center;
+    color: #3f51b5; /* Primary color */
+  }
+
+  .room-config-card {
+    padding: 25px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .room-type-inputs {
+    display: flex;
+    gap: 20px; /* Space between the two input fields */
+    margin-bottom: 20px;
+
+    mat-form-field {
+      flex: 1; /* Make them take equal space */
+    }
+  }
+
+  .form-level-error {
+    color: #f44336; /* Angular Material error color */
+    font-size: 0.75em;
+    margin-top: -10px; /* Pull error message closer to fields */
+    display: block; /* Ensure it takes full width */
+    text-align: center;
+    margin-bottom: 15px;
+  }
+}

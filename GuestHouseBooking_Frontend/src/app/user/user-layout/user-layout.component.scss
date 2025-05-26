@@ -1,0 +1,67 @@
+.user-page-container {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: row; /* Ensure items are in a row */
+}
+
+.user-header {
+  background-color: #f0f0f0;
+  padding: 16px;
+  margin-left: -20px;
+  padding-right: 24px; /* Add some right padding */
+  padding-left: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 10;
+}
+
+.app-logo {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.username {
+  margin-right: 0px;
+}
+
+.logout-button {
+  margin-left: 8px; /* Add some left margin */
+}
+
+.user-sidebar {
+  width: 200px; /* Keep the defined width */
+  background-color: #eee;
+  padding: 16px;
+  position: fixed;
+  top: 60px; /* Adjust if header height is different */
+  left: 0;
+  bottom: 0; /* Extend to the bottom */
+  overflow-y: auto; /* Add scroll if sidebar content overflows */
+}
+
+.user-content {
+  flex-grow: 1;
+  margin-right: 30px;
+  margin-left: 30px;
+  padding: 16px;
+  padding-left: 220px; /* Adjust this if needed */
+  padding-top: 80px; /* Keep top padding */
+  padding-left: calc(200px + 24px);
+}
+
+.active-link {
+  background-color: #924e4e;
+  font-weight: bold;
+}
+
+

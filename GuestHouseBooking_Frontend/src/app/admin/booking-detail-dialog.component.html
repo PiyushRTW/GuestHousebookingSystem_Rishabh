@@ -1,0 +1,38 @@
+    <h1 mat-dialog-title>Booking Details - {{ data.id }}</h1>
+    <div mat-dialog-content class="booking-details-content">
+      <div class="detail-section">
+        <h3>Guest Information</h3>
+        <p><strong>Name:</strong> {{ data.guestName }}</p>
+        <p><strong>Email:</strong> {{ data.guestEmail }}</p>
+        <p><strong>Phone:</strong> {{ data.guestPhone }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Booking Information</h3>
+        <p><strong>Guest House:</strong> {{ data.hotelName }}</p>
+        <p><strong>Room:</strong> {{ data.roomNumber }} ({{ data.bedType | titlecase }})</p>
+        <p><strong>Check-in Date:</strong> {{ data.checkInDate | date:'mediumDate' }}</p>
+        <p><strong>Check-out Date:</strong> {{ data.checkOutDate | date:'mediumDate' }}</p>
+        <p><strong>Nights:</strong> {{ data.numberOfNights }}</p>
+        <p><strong>Price per Night:</strong> {{ data.pricePerNight | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Total Cost:</strong> {{ data.totalCost | currency:'USD':'symbol':'1.2-2' }}</p>
+        <p><strong>Booking Date:</strong> {{ data.bookingDate | date:'medium' }}</p>
+        <p><strong>Status:</strong>
+          <span [ngClass]="{'status-confirmed': data.status === 'Confirmed',
+                            'status-pending': data.status === 'Pending',
+                            'status-cancelled': data.status === 'Cancelled',
+                            'status-completed': data.status === 'Completed'}">
+            {{ data.status }}
+          </span>
+        </p>
+      </div>
+
+      <div class="detail-section" *ngIf="data.approvedBy">
+        <h3>Approval Details</h3>
+        <p><strong>Approved By:</strong> {{ data.approvedBy }}</p>
+        <p><strong>Approval Date:</strong> {{ data.approvalDate | date:'medium' }}</p>
+      </div>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button (click)="dialogRef.close()">Close</button>
+    </div>

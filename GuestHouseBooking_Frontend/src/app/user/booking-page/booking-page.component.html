@@ -1,0 +1,109 @@
+<div class="booking-container">
+  <mat-card class="booking-card">
+    <mat-card-title>Book a Room</mat-card-title>
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-indicator">Loading...</div>
+      <form *ngIf="!loading" [formGroup]="bookingForm" class="booking-form">
+        <div class="form-section">
+          <h2>Booking Details</h2>
+          <div class="row">
+            <mat-form-field class="full-width">
+              <mat-label>Arrival Date</mat-label>
+              <input matInput [matDatepicker]="arrivalPicker" formControlName="arrivalDate" required>
+              <mat-datepicker-toggle matSuffix [for]="arrivalPicker"></mat-datepicker-toggle>
+              <mat-datepicker #arrivalPicker></mat-datepicker>
+              <mat-error *ngIf="bookingForm.get('arrivalDate')?.hasError('required')">
+                Arrival date is required.
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="full-width">
+              <mat-label>Departure Date</mat-label>
+              <input matInput [matDatepicker]="departurePicker" formControlName="departureDate" required>
+              <mat-datepicker-toggle matSuffix [for]="departurePicker"></mat-datepicker-toggle>
+              <mat-datepicker #departurePicker></mat-datepicker>
+              <mat-error *ngIf="bookingForm.get('departureDate')?.hasError('required')">
+                Departure date is required.
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="row">
+            <mat-form-field class="full-width">
+              <mat-label>Guest House</mat-label>
+              <mat-select formControlName="guestHouse" required>
+                <mat-option *ngFor="let guestHouse of guestHouses" [value]="guestHouse.id">
+                  {{ guestHouse.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="bookingForm.get('guestHouse')?.hasError('required')">
+                Guest House is required.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>Room</mat-label>
+              <mat-select formControlName="room" required>
+                <mat-option *ngFor="let room of rooms" [value]="room.id">
+                  {{ room.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="bookingForm.get('room')?.hasError('required')">
+                Room is required.
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="row">
+           <mat-form-field class="full-width">
+  <mat-label>Bed</mat-label>
+  <mat-select formControlName="bed" required>
+    <mat-option *ngFor="let bed of beds" [value]="bed.id">
+      {{ bed.name }}
+    </mat-option>
+  </mat-select>
+  <mat-error *ngIf="bookingForm.get('bed')?.hasError('required')">
+    Bed is required.
+  </mat-error>
+</mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-section" *ngIf="isLoggedIn">
+          <h2>Personal Information</h2>
+          <div class="row">
+            <mat-form-field class="full-width">
+              <mat-label>Full Name</mat-label>
+              <input matInput formControlName="fullName" required>
+              <mat-error *ngIf="bookingForm.get('fullName')?.hasError('required')">
+                Full Name is required.
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" required>
+              <mat-error *ngIf="bookingForm.get('email')?.hasError('required')">
+                Email is required.
+              </mat-error>
+              <mat-error *ngIf="bookingForm.get('email')?.hasError('email')">
+                Invalid email format.
+              </mat-error>
+            </mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field class="full-width">
+              <mat-label>Phone Number</mat-label>
+              <input matInput formControlName="phoneNumber" required>
+              <mat-error *ngIf="bookingForm.get('phoneNumber')?.hasError('required')">
+                Phone Number is required.
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="bookingForm.invalid || loading">
+        Submit Booking
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

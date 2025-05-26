@@ -1,0 +1,18 @@
+<div class="hotels-container">
+  <h1>Available Hotels in Vadodara</h1>
+  <div class="hotel-list">
+    <mat-card class="hotel-card" *ngFor="let hotel of hotels">
+      <mat-card-header>
+        <mat-card-title>{{ hotel.name }}</mat-card-title>
+        <mat-card-subtitle>{{ hotel.address }} - Rating: {{ hotel.rating }}</mat-card-subtitle>
+      </mat-card-header>
+      <img mat-card-image [src]="hotel.imageUrl" alt="{{ hotel.name }}">
+      <mat-card-content>
+        <p>{{ hotel.description }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="viewAvailability(hotel.id)">View Availability & Book</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

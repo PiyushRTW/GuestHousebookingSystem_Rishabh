@@ -1,0 +1,48 @@
+.my-bookings-container {
+  padding: 16px;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #757575;
+}
+
+.no-bookings {
+  text-align: center;
+  padding: 40px;
+  color: #757575;
+
+  button {
+    margin-top: 16px;
+  }
+}
+
+.bookings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.booking-card {
+  // Add any specific card styling if needed
+}
+
+.status-confirmed {
+  color: green;
+  font-weight: bold;
+}
+
+.status-pending {
+  color: orange;
+  font-weight: bold;
+}
+
+.status-cancelled {
+  color: red;
+  font-weight: bold;
+}

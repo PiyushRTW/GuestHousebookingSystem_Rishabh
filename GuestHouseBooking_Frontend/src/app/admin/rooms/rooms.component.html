@@ -1,0 +1,56 @@
+<div class="rooms-container">
+  <h2>Room Configuration</h2>
+
+  <form [formGroup]="roomConfigForm" (ngSubmit)="onAddRooms()">
+    <mat-card class="room-config-card">
+      <mat-card-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Guest House</mat-label>
+          <mat-select formControlName="hotelId" required>
+            <mat-option>-- None --</mat-option>
+            <mat-option *ngFor="let hotel of hotels" [value]="hotel.id">
+              {{ hotel.name }} ({{ hotel.address }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="roomConfigForm.get('hotelId')?.hasError('required') && roomConfigForm.get('hotelId')?.touched">
+            Guest House selection is required.
+          </mat-error>
+        </mat-form-field>
+
+        <div class="room-type-inputs">
+          <mat-form-field appearance="outline">
+            <mat-label>Number of Single Bed Rooms</mat-label>
+            <input matInput type="number" formControlName="singleBedRoomsToAdd" min="0" required>
+            <mat-error *ngIf="roomConfigForm.get('singleBedRoomsToAdd')?.hasError('required') && roomConfigForm.get('singleBedRoomsToAdd')?.touched">
+              Count is required.
+            </mat-error>
+            <mat-error *ngIf="roomConfigForm.get('singleBedRoomsToAdd')?.hasError('min')">
+              Must be non-negative.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Number of Double Bed Rooms</mat-label>
+            <input matInput type="number" formControlName="doubleBedRoomsToAdd" min="0" required>
+            <mat-error *ngIf="roomConfigForm.get('doubleBedRoomsToAdd')?.hasError('required') && roomConfigForm.get('doubleBedRoomsToAdd')?.touched">
+              Count is required.
+            </mat-error>
+            <mat-error *ngIf="roomConfigForm.get('doubleBedRoomsToAdd')?.hasError('min')">
+              Must be non-negative.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-error *ngIf="roomConfigForm.hasError('noRoomsAdded') && roomConfigForm.touched" class="form-level-error">
+          Please add at least one single bed or double bed room.
+        </mat-error>
+
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" type="submit" [disabled]="roomConfigForm.invalid">
+          Add Rooms
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

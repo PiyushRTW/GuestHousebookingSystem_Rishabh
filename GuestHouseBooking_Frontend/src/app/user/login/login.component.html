@@ -1,0 +1,33 @@
+<div class="login-container">
+  <div class="image-side">
+    <div class="image-placeholder">
+      <span>Here will be an image</span>
+    </div>
+  </div>
+  <mat-card class="login-card">
+    <mat-card-title class="login-title">Login</mat-card-title>
+    <mat-card-content>
+      <form class="login-form">
+        <mat-form-field class="full-width">
+          <mat-label>Username</mat-label>
+          <input matInput placeholder="Enter your username" [(ngModel)]="username" name="username" required>
+        </mat-form-field>
+        <mat-form-field class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" placeholder="Enter your password" [(ngModel)]="password" name="password" required>
+        </mat-form-field>
+        <mat-radio-group aria-label="Select an option" [(ngModel)]="loginType" name="loginType">
+          <mat-radio-button value="user" class="login-option">User</mat-radio-button>
+          <mat-radio-button value="admin" class="login-option">Admin</mat-radio-button>
+        </mat-radio-group>
+        <mat-checkbox class="remember-me">Remember Me</mat-checkbox>
+      </form>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="onLogin()">Login</button>
+    </mat-card-actions>
+    <div class="forgot-password">
+      <a href="#">Forgot Password?</a>
+    </div>
+  </mat-card>
+</div>

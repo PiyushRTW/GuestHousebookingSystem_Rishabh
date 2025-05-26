@@ -1,0 +1,25 @@
+.hotels-container {
+  padding: 16px;
+}
+
+.hotel-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.hotel-card {
+  max-width: 400px; /* Optional: set a maximum width for the cards */
+}
+
+.mat-card-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover; /* Ensure image covers the area without distortion */
+}
+
+.mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -1,0 +1,28 @@
+<div class="hotels-container">
+  <h2>Guest House Management</h2>
+
+  <button mat-raised-button color="primary" (click)="openAddEditDialog()">
+    <mat-icon>add</mat-icon> Add New Guest House
+  </button>
+
+  <mat-card *ngIf="hotels.length === 0" class="no-hotels-message">
+    No Guest House found. Click "Add New Guest House" to get started!
+  </mat-card>
+
+  <mat-list *ngIf="hotels.length > 0" class="hotel-list">
+    <mat-list-item *ngFor="let hotel of hotels">
+      <h3 matListItemTitle>{{ hotel.name }}</h3>
+      <p matListItemLine>{{ hotel.address }}</p>
+      <p matListItemLine>{{ hotel.description }}</p>
+
+      <div matListItemMeta class="hotel-actions">
+        <button mat-icon-button color="accent" (click)="openAddEditDialog(hotel)" title="Edit Hotel">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteHotel(hotel.id ,hotel.name)" title="Delete Hotel">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </mat-list-item>
+  </mat-list>
+</div>

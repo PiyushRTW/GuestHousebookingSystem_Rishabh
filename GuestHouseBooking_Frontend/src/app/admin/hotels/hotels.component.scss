@@ -1,0 +1,59 @@
+.hotels-container {
+  padding: 20px;
+
+  h2 {
+    margin-bottom: 20px;
+  }
+
+  button[mat-raised-button] {
+    margin-bottom: 20px;
+  }
+
+  .no-hotels-message {
+    padding: 20px;
+    text-align: center;
+    color: #555;
+    margin-top: 20px;
+  }
+
+  .hotel-list {
+    margin-top: 20px;
+
+    mat-list-item {
+      margin-bottom: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .mat-list-item-content {
+        display: flex;
+        flex-grow: 1;
+        align-items: center;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.2em;
+        font-weight: 500;
+        margin-right: 15px; // Space between title and details
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9em;
+        &:not(:last-child) {
+          margin-right: 10px; // Space between lines
+        }
+      }
+
+      .hotel-actions {
+        display: flex;
+        gap: 5px;
+      }
+    }
+  }
+}

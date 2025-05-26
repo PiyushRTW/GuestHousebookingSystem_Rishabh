@@ -1,0 +1,32 @@
+<div class="my-bookings-container">
+  <h1>My Bookings</h1>
+
+  <div *ngIf="isLoading" class="loading-indicator">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading your bookings...</p>
+  </div>
+
+  <div *ngIf="!isLoading && userBookings.length === 0" class="no-bookings">
+    <p>You have no bookings yet.</p>
+    <button mat-raised-button color="primary" routerLink="/user/hotels">Book a Hotel Now</button>
+  </div>
+
+  <div *ngIf="!isLoading && userBookings.length > 0" class="bookings-list">
+    <mat-card *ngFor="let booking of userBookings" class="booking-card">
+      <mat-card-header>
+        <mat-card-title>Booking ID: {{ booking.bookingId }}</mat-card-title>
+        <mat-card-subtitle>{{ booking.hotelName }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p><strong>Room:</strong> {{ booking.roomNumber }} - {{ booking.bedName }}</p>
+        <p><strong>Arrival:</strong> {{ booking.arrivalDate | date: 'mediumDate' }}</p>
+        <p><strong>Departure:</strong> {{ booking.departureDate | date: 'mediumDate' }}</p>
+        <p><strong>Status:</strong> <span [ngClass]="getStatusClass(booking.status)">{{ booking.status }}</span></p>
+        <p><strong>Total Cost:</strong> {{ booking.totalCost | currency:'INR' }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button color="primary">View Details</button>
+        </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

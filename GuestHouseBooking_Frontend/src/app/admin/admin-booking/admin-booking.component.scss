@@ -1,0 +1,71 @@
+.admin-booking-container {
+  padding: 20px;
+  max-width: 800px; /* Adjust max-width for better form layout */
+  margin: 0 auto; /* Center the container */
+}
+
+.booking-card {
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+
+  mat-card-title {
+    font-size: 1.8em;
+    margin-bottom: 25px;
+    color: #3f51b5; /* Primary color */
+    text-align: center;
+  }
+
+  .booking-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    gap: 20px; /* Space between grid items */
+
+    // Span full width for specific elements
+    .full-width {
+      grid-column: 1 / -1; /* Spans across all columns */
+    }
+
+    .section-title {
+      grid-column: 1 / -1;
+      font-size: 1.2em;
+      font-weight: 500;
+      color: #555;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+
+    // Adjust specific form fields to take full width if needed
+    mat-form-field {
+      width: 100%;
+    }
+
+    // Align date pickers nicely
+    mat-form-field:nth-child(even) {
+        // This might target the second date picker, make sure it fits
+    }
+
+    .form-level-error {
+      grid-column: 1 / -1; /* Span across all columns */
+      color: #f44336;
+      font-size: 0.75em;
+      margin-top: -10px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .form-actions {
+      grid-column: 1 / -1; /* Span across all columns */
+      display: flex;
+      justify-content: flex-end; /* Align button to the right */
+      margin-top: 20px;
+
+      button {
+        padding: 10px 25px;
+        font-size: 1.1em;
+      }
+    }
+  }
+}
