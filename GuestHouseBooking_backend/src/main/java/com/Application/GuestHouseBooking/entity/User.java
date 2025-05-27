@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -41,4 +43,13 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @CreatedBy
+    @Column(nullable = false, updatable = false) // user who created will not change
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(nullable = false) // user who last modified can change
+    private String lastModifiedBy;
+    // --- END AUDITING FIELDS ---
 }

@@ -16,6 +16,8 @@ import { AdminModule } from './admin/admin.module'; // Import AdminModule
 import { UserModule } from './user/user.module';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';   // Import UserModule
 
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -33,7 +35,8 @@ import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.c
     MatListModule,
     MatIconModule,
     MatButtonModule,
-    LayoutModule
+    LayoutModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

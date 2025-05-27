@@ -6,6 +6,7 @@ import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.repository.GuestHouseRepository;
 import com.Application.GuestHouseBooking.repository.RoomRepository;
 import com.Application.GuestHouseBooking.service.RoomServices;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,12 @@ public class RoomServiceImplementations implements RoomServices {
 
     @Autowired
     private GuestHouseRepository guestHouseRepository; // To fetch associated GuestHouse
+
+    @Autowired
+    private AuditLogServices auditLogService; // <<< Inject AuditLogService
+
+    @Autowired
+    private ObjectMapper objectMapper; // <<< Inject ObjectMapper
 
     private RoomDTO convertToDTO(Room room) {
         RoomDTO dto = new RoomDTO();
@@ -62,6 +69,19 @@ public class RoomServiceImplementations implements RoomServices {
     public RoomDTO createRoom(RoomDTO roomDTO) {
         Room room = convertToEntity(roomDTO);
         Room savedRoom = roomRepository.save(room);
+        try {
+            auditLogService.logAudit(
+                    "Room",
+                    savedRoom.getId(),
+                    "CREATE",
+                    savedRoom.getCreatedBy(), // This will be populated by Spring Data JPA Auditing
+                    null, // No old value for create
+                    objectMapper.writeValueAsString(savedRoom), // New value as JSON
+                    "New Room registered"
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to log audit for Room creation: " + e.getMessage());
+        }
         return convertToDTO(savedRoom);
     }
 
@@ -83,19 +103,74 @@ public class RoomServiceImplementations implements RoomServices {
     }
 
     public Optional<RoomDTO> updateRoom(Long id, RoomDTO roomDTO) {
-        Optional<Room> existingRoom = roomRepository.findById(id);
-        if (existingRoom.isPresent()) {
-            Room roomToUpdate = convertToEntity(roomDTO);
-            roomToUpdate.setId(id); // Ensure the ID is set for updating
-            Room updatedRoom = roomRepository.save(roomToUpdate);
+        Optional<Room> existingRoomOptional = roomRepository.findById(id);
+        if (existingRoomOptional.isPresent()) {
+            Room existingRoom = existingRoomOptional.get();
+
+            String oldValue = null; // Prepare for audit logging
+            try {
+                oldValue = objectMapper.writeValueAsString(existingRoom);
+            } catch (Exception e) {
+                System.err.println("Failed to convert old Room to JSON: " + e.getMessage());
+            }
+
+            // Update fields from DTO to existing entity
+            GuestHouse guestHouse = guestHouseRepository.findById(roomDTO.getGuestHouseId())
+                    .orElseThrow(() -> new RuntimeException("GuestHouse not found with ID: " + roomDTO.getGuestHouseId()));
+            existingRoom.setGuestHouse(guestHouse); // Update GuestHouse association if changed
+            existingRoom.setRoomNumber(roomDTO.getRoomNumber());
+            existingRoom.setCapacity(roomDTO.getCapacity());
+            existingRoom.setBasePrice(roomDTO.getPricePerNight());
+            existingRoom.setDescription(roomDTO.getDescription());
+
+            Room updatedRoom = roomRepository.save(existingRoom); // After save, lastModifiedBy is set
+
+            // --- Audit Log: UPDATE ---
+            try {
+                auditLogService.logAudit(
+                        "Room",
+                        updatedRoom.getId(),
+                        "UPDATE",
+                        updatedRoom.getLastModifiedBy(),
+                        oldValue,
+                        objectMapper.writeValueAsString(updatedRoom), 
+                        "Room updated for GuestHouse ID: " + updatedRoom.getGuestHouse().getId()
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log audit for Room update: " + e.getMessage());
+            }
+            // --- End Audit Log ---
+
             return Optional.of(convertToDTO(updatedRoom));
         }
         return Optional.empty();
     }
 
     public boolean deleteRoom(Long id) {
-        if (roomRepository.existsById(id)) {
+        Optional<Room> roomToDeleteOptional = roomRepository.findById(id);
+        if (roomToDeleteOptional.isPresent()) {
+            Room roomToDelete = roomToDeleteOptional.get();
+
+            String oldValue = null;
+            try {
+                oldValue = objectMapper.writeValueAsString(roomToDelete);
+            } catch (Exception e) {
+                System.err.println("Failed to convert old Room to JSON for delete: " + e.getMessage());
+            }
+
             roomRepository.deleteById(id);
+
+            // --- Audit Log: DELETE ---
+            auditLogService.logAudit(
+                    "Room",
+                    id,
+                    "DELETE",
+                    roomToDelete.getCreatedBy(),
+                    oldValue,
+                    null,
+                    "Room deleted. Was for GuestHouse ID: " + roomToDelete.getGuestHouse().getId()
+            );
+            // --- End Audit Log ---
             return true;
         }
         return false;

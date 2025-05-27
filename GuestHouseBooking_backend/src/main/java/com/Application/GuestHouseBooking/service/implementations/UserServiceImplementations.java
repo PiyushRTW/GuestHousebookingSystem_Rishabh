@@ -4,6 +4,7 @@ import com.Application.GuestHouseBooking.dtos.UserDTO;
 import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 import com.Application.GuestHouseBooking.service.UserServices;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,12 @@ import java.util.stream.Collectors;
 public class UserServiceImplementations implements UserServices {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuditLogServices auditLogService; // Inject AuditLogService
+
+    @Autowired
+    private ObjectMapper objectMapper; // Inject ObjectMapper for JSON conversion
 
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
@@ -56,6 +63,22 @@ public class UserServiceImplementations implements UserServices {
 
         User user = convertToEntity(userDTO);
         User savedUser = userRepository.save(user);
+        // --- Audit Log: CREATE for User ---
+        try {
+            auditLogService.logAudit(
+                    "User",
+                    savedUser.getId(),
+                    "CREATE",
+                    savedUser.getCreatedBy(), // This will be populated by Spring Data JPA Auditing
+                    null, // No old value for create
+                    objectMapper.writeValueAsString(savedUser), // New value as JSON
+                    "New User registered"
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to log audit for User creation: " + e.getMessage());
+        }
+        // --- End Audit Log ---
+
         return convertToDTO(savedUser);
     }
 

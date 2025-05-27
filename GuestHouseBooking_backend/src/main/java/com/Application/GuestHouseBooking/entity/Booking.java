@@ -70,7 +70,7 @@ public class Booking {
     // --- End of Auditing fields ---
 
     public enum BookingStatus {
-        PENDING, CONFIRMED, CANCELED, COMPLETED
+        PENDING, CONFIRMED, CANCELED, COMPLETED, DENIED
     }
 
 }

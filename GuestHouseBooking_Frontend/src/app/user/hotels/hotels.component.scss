@@ -23,3 +23,50 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.guest-houses-container {
+  padding: 20px;
+  
+  .loading-state,
+  .error-state,
+  .no-data-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    text-align: center;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+    }
+
+    p {
+      margin: 16px 0;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .guest-houses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    
+    .guest-house-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      
+      mat-card-content {
+        flex-grow: 1;
+      }
+
+      mat-card-actions {
+        padding: 16px;
+      }
+    }
+  }
+}

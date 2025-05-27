@@ -1,18 +1,46 @@
-<div class="hotels-container">
-  <h1>Available Hotels in Vadodara</h1>
-  <div class="hotel-list">
-    <mat-card class="hotel-card" *ngFor="let hotel of hotels">
+<!-- Guest Houses List -->
+<div class="guest-houses-container">
+  <h1>Available Guest Houses</h1>
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading guest houses...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadGuestHouses()">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Guest Houses Grid -->
+  <div *ngIf="!loading && !error" class="guest-houses-grid">
+    <mat-card *ngFor="let guestHouse of guestHouses" class="guest-house-card">
       <mat-card-header>
-        <mat-card-title>{{ hotel.name }}</mat-card-title>
-        <mat-card-subtitle>{{ hotel.address }} - Rating: {{ hotel.rating }}</mat-card-subtitle>
+        <mat-card-title>{{ guestHouse.name }}</mat-card-title>
+        <mat-card-subtitle>{{ guestHouse.address }}</mat-card-subtitle>
       </mat-card-header>
-      <img mat-card-image [src]="hotel.imageUrl" alt="{{ hotel.name }}">
+      
       <mat-card-content>
-        <p>{{ hotel.description }}</p>
+        <p *ngIf="guestHouse.description">{{ guestHouse.description }}</p>
+        <p>Total Rooms: {{ guestHouse.totalRooms }}</p>
       </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="viewAvailability(hotel.id)">View Availability & Book</button>
+
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" (click)="onGuestHouseSelect(guestHouse)">
+          View Availability & Book
+        </button>
       </mat-card-actions>
     </mat-card>
+  </div>
+
+  <!-- No Guest Houses State -->
+  <div *ngIf="!loading && !error && guestHouses.length === 0" class="no-data-state">
+    <mat-icon>hotel</mat-icon>
+    <p>No guest houses available at the moment.</p>
   </div>
 </div>

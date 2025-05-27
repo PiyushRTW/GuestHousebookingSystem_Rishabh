@@ -1,5 +1,6 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import com.Application.GuestHouseBooking.MailServices.MailService;
 import com.Application.GuestHouseBooking.dtos.BookingDTO;
 import com.Application.GuestHouseBooking.entity.Bed;
 import com.Application.GuestHouseBooking.entity.Booking;
@@ -7,9 +8,9 @@ import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.BedRepository;
 import com.Application.GuestHouseBooking.repository.BookingRepository;
-import com.Application.GuestHouseBooking.repository.RoomRepository;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 import com.Application.GuestHouseBooking.service.BookingServices;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImplementations implements BookingServices {
+
     @Autowired
     private BookingRepository bookingRepository;
 
@@ -30,6 +32,15 @@ public class BookingServiceImplementations implements BookingServices {
     // *** MODIFICATION HERE: Use BedRepository instead of RoomRepository for direct booking link ***
     @Autowired
     private BedRepository bedRepository;
+
+    @Autowired
+    private AuditLogServices auditLogService; // <<< Inject AuditLogService
+
+    @Autowired
+    private ObjectMapper objectMapper; // <<< Inject ObjectMapper
+
+    @Autowired
+    private MailService mailService;
 
     // Helper for converting Entity to DTO
     private BookingDTO convertToDTO(Booking booking) {
@@ -85,26 +96,19 @@ public class BookingServiceImplementations implements BookingServices {
     // --- CRUD Operations ---
 
     public BookingDTO createBooking(BookingDTO bookingDTO) {
-        // Basic business logic validation (more extensive validation in a real app)
         if (bookingDTO.getCheckInDate().isAfter(bookingDTO.getCheckOutDate())) {
             throw new RuntimeException("Check-in date cannot be after check-out date.");
         }
         if (bookingDTO.getNumberOfGuests() <= 0) {
             throw new RuntimeException("Number of guests must be positive.");
         }
-        if (bookingDTO.getNumberOfGuests() > 1) { // Assuming one booking is for a single bed, implies 1 guest
+        if (bookingDTO.getNumberOfGuests() > 1) { // Enforcing 1 guest per bed booking
             throw new RuntimeException("This booking type supports only 1 guest per bed.");
         }
 
-
-        // Check bed capacity (basic example - assuming 1 guest per bed)
         Bed bed = bedRepository.findById(bookingDTO.getBedId())
                 .orElseThrow(() -> new RuntimeException("Bed not found for booking: " + bookingDTO.getBedId()));
-        // Note: 'count' in Bed is number of beds of that type. If booking is for ONE bed, then check capacity of that specific bed.
-        // For simplicity now, let's just assume one "Bed" entity instance equals one bookable slot.
-        // More complex logic would involve checking if a bed with count > 1 still has slots.
 
-        // Check for overlapping bookings for the SPECIFIC BED
         List<Booking> overlappingBookings = bookingRepository.findByBedIdAndCheckOutDateAfterAndCheckInDateBefore(
                 bookingDTO.getBedId(), bookingDTO.getCheckInDate(), bookingDTO.getCheckOutDate());
         if (!overlappingBookings.isEmpty()) {
@@ -113,6 +117,29 @@ public class BookingServiceImplementations implements BookingServices {
 
         Booking booking = convertToEntity(bookingDTO);
         Booking savedBooking = bookingRepository.save(booking);
+
+        // --- Audit Log: CREATE ---
+        try {
+            auditLogService.logAudit(
+                    "Booking",
+                    savedBooking.getId(),
+                    "CREATE",
+                    savedBooking.getCreatedBy(), // Will be populated by Spring Data JPA Auditing
+                    null, // No old value for create
+                    objectMapper.writeValueAsString(savedBooking), // New value as JSON
+                    "New Booking created for User ID: " + savedBooking.getUser().getId() + " on Bed ID: " + savedBooking.getBed().getId()
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to log audit for Booking creation: " + e.getMessage());
+        }
+        // --- End Audit Log ---
+
+        try {
+            mailService.sendBookingNotificationToAdmin(savedBooking, savedBooking.getUser());
+        } catch (Exception e) {
+            System.err.println("Failed to send admin notification email for Booking ID " + savedBooking.getId() + ": " + e.getMessage());
+        }
+
         return convertToDTO(savedBooking);
     }
 
@@ -144,6 +171,14 @@ public class BookingServiceImplementations implements BookingServices {
         Optional<Booking> existingBookingOptional = bookingRepository.findById(id);
         if (existingBookingOptional.isPresent()) {
             Booking existingBooking = existingBookingOptional.get();
+            Booking.BookingStatus oldStatus = existingBooking.getStatus();
+
+            String oldValue = null; // Prepare for audit logging
+            try {
+                oldValue = objectMapper.writeValueAsString(existingBooking);
+            } catch (Exception e) {
+                System.err.println("Failed to convert old Booking to JSON: " + e.getMessage());
+            }
 
             // Fetch User and Bed (always ensure they exist on update as well)
             User user = userRepository.findById(bookingDTO.getUserId())
@@ -152,7 +187,7 @@ public class BookingServiceImplementations implements BookingServices {
                     .orElseThrow(() -> new RuntimeException("Bed not found with ID: " + bookingDTO.getBedId()));
 
             existingBooking.setUser(user);
-            existingBooking.setBed(bed); // Set the Bed
+            existingBooking.setBed(bed);
             existingBooking.setCheckInDate(bookingDTO.getCheckInDate());
             existingBooking.setCheckOutDate(bookingDTO.getCheckOutDate());
             existingBooking.setNumberOfGuests(bookingDTO.getNumberOfGuests());
@@ -160,7 +195,7 @@ public class BookingServiceImplementations implements BookingServices {
             existingBooking.setSpecialRequests(bookingDTO.getSpecialRequests());
 
             // Recalculate price if dates or bed changed
-            Room room = bed.getRoom(); // Access the Room through the Bed
+            Room room = bed.getRoom();
             if (room == null) {
                 throw new RuntimeException("Bed is not associated with a Room, cannot calculate price.");
             }
@@ -169,14 +204,64 @@ public class BookingServiceImplementations implements BookingServices {
             existingBooking.setTotalPrice(calculatedPrice);
 
             Booking updatedBooking = bookingRepository.save(existingBooking);
+
+            // --- Audit Log: UPDATE ---
+            try {
+                auditLogService.logAudit(
+                        "Booking",
+                        updatedBooking.getId(),
+                        "UPDATE",
+                        updatedBooking.getLastModifiedBy(), // Will be populated by Spring Data JPA Auditing
+                        oldValue,
+                        objectMapper.writeValueAsString(updatedBooking), // New value as JSON
+                        "Booking updated for User ID: " + updatedBooking.getUser().getId() + " on Bed ID: " + updatedBooking.getBed().getId()
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to log audit for Booking update: " + e.getMessage());
+            }
+            // --- End Audit Log ---
+
+            if (updatedBooking.getStatus() != oldStatus) {
+                if (updatedBooking.getStatus() == Booking.BookingStatus.CONFIRMED || // <<< Changed from APPROVED
+                        updatedBooking.getStatus() == Booking.BookingStatus.DENIED ||
+                        updatedBooking.getStatus() == Booking.BookingStatus.CANCELED) {
+                    try {
+                        mailService.sendBookingStatusUpdateToUser(updatedBooking, updatedBooking.getUser(), oldStatus);
+                    } catch (Exception e) {
+                        System.err.println("Failed to send user notification email for Booking ID " + updatedBooking.getId() + ": " + e.getMessage());
+                    }
+                }
+            }
             return Optional.of(convertToDTO(updatedBooking));
         }
         return Optional.empty();
     }
 
     public boolean deleteBooking(Long id) {
-        if (bookingRepository.existsById(id)) {
+        Optional<Booking> bookingToDeleteOptional = bookingRepository.findById(id);
+        if (bookingToDeleteOptional.isPresent()) {
+            Booking bookingToDelete = bookingToDeleteOptional.get();
+
+            String oldValue = null; // Prepare for audit logging
+            try {
+                oldValue = objectMapper.writeValueAsString(bookingToDelete);
+            } catch (Exception e) {
+                System.err.println("Failed to convert old Booking to JSON for delete: " + e.getMessage());
+            }
+
             bookingRepository.deleteById(id);
+
+            // --- Audit Log: DELETE ---
+            auditLogService.logAudit(
+                    "Booking",
+                    id,
+                    "DELETE",
+                    bookingToDelete.getCreatedBy(), // Using createdBy as a fallback; ideally, get current user from security context for deletion
+                    oldValue,
+                    null, // No new value for delete
+                    "Booking deleted for User ID: " + bookingToDelete.getUser().getId() + " on Bed ID: " + bookingToDelete.getBed().getId()
+            );
+            // --- End Audit Log ---
             return true;
         }
         return false;
