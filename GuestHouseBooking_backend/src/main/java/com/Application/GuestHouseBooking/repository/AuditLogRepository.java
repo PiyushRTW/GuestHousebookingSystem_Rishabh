@@ -10,5 +10,4 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLogs, Long> {
     List<AuditLogs> findByEntityNameAndEntityId(String entityName, Long entityId);
     List<AuditLogs> findByChangedBy(String changedBy);
-    // You can add more custom queries here as needed, e.g., by date range, operation type
 }

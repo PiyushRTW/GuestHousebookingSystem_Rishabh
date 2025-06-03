@@ -75,4 +75,24 @@
     text-align: right;
     width: 100%; /* Make it take full width for alignment */
   }
+
+  .divider {
+    width: 100%;
+    margin: 24px 0;
+  }
+
+  .register-section {
+    width: 100%;
+    text-align: center;
+    margin-top: 16px;
+
+    p {
+      margin-bottom: 16px;
+      color: #666;
+    }
+
+    button {
+      width: 200px;
+    }
+  }
 }

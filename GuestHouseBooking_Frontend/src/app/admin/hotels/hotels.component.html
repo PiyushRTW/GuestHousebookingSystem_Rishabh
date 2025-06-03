@@ -1,28 +1,62 @@
-<div class="hotels-container">
-  <h2>Guest House Management</h2>
+<div class="guest-houses-container">
+  <div class="header">
+    <h1>Guest Houses Management</h1>
+    <button mat-raised-button color="primary" (click)="openAddEditDialog()">
+      <mat-icon>add</mat-icon>
+      Add New Guest House
+    </button>
+  </div>
 
-  <button mat-raised-button color="primary" (click)="openAddEditDialog()">
-    <mat-icon>add</mat-icon> Add New Guest House
-  </button>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading guest houses...</p>
+  </div>
 
-  <mat-card *ngIf="hotels.length === 0" class="no-hotels-message">
-    No Guest House found. Click "Add New Guest House" to get started!
-  </mat-card>
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="loadGuestHouses()">
+      Try Again
+    </button>
+  </div>
 
-  <mat-list *ngIf="hotels.length > 0" class="hotel-list">
-    <mat-list-item *ngFor="let hotel of hotels">
-      <h3 matListItemTitle>{{ hotel.name }}</h3>
-      <p matListItemLine>{{ hotel.address }}</p>
-      <p matListItemLine>{{ hotel.description }}</p>
+  <!-- Guest Houses Grid -->
+  <div *ngIf="!loading && !error" class="guest-houses-grid">
+    <mat-card *ngFor="let guestHouse of guestHouses" class="guest-house-card">
+      <mat-card-header>
+        <mat-card-title>{{ guestHouse.name }}</mat-card-title>
+        <mat-card-subtitle>{{ guestHouse.city }}, {{ guestHouse.state }}</mat-card-subtitle>
+      </mat-card-header>
 
-      <div matListItemMeta class="hotel-actions">
-        <button mat-icon-button color="accent" (click)="openAddEditDialog(hotel)" title="Edit Hotel">
+      <img *ngIf="guestHouse.imageUrl" mat-card-image [src]="guestHouse.imageUrl" [alt]="guestHouse.name">
+
+      <mat-card-content>
+        <p><strong>Address:</strong> {{ guestHouse.address }}</p>
+        <p><strong>Contact:</strong> {{ guestHouse.contactNumber }}</p>
+        <p><strong>Email:</strong> {{ guestHouse.email }}</p>
+        <p *ngIf="guestHouse.description"><strong>Description:</strong> {{ guestHouse.description }}</p>
+        <p *ngIf="guestHouse.amenities"><strong>Amenities:</strong> {{ guestHouse.amenities }}</p>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-icon-button color="primary" (click)="openAddEditDialog(guestHouse)" matTooltip="Edit">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" (click)="deleteHotel(hotel.id ,hotel.name)" title="Delete Hotel">
+        <button mat-icon-button color="warn" (click)="deleteGuestHouse(guestHouse.id!, guestHouse.name)" matTooltip="Delete">
           <mat-icon>delete</mat-icon>
         </button>
-      </div>
-    </mat-list-item>
-  </mat-list>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- No Guest Houses State -->
+  <div *ngIf="!loading && !error && guestHouses.length === 0" class="no-data-state">
+    <mat-icon>hotel</mat-icon>
+    <p>No guest houses found. Add your first guest house to get started!</p>
+    <button mat-raised-button color="primary" (click)="openAddEditDialog()">
+      Add Guest House
+    </button>
+  </div>
 </div>

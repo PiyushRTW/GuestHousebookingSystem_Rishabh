@@ -1,18 +1,20 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.Application.GuestHouseBooking.dtos.RoomDTO;
 import com.Application.GuestHouseBooking.entity.GuestHouse;
 import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.repository.GuestHouseRepository;
 import com.Application.GuestHouseBooking.repository.RoomRepository;
 import com.Application.GuestHouseBooking.service.RoomServices;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class RoomServiceImplementations implements RoomServices {
@@ -34,9 +36,6 @@ public class RoomServiceImplementations implements RoomServices {
         dto.setId(room.getId());
         dto.setGuestHouseId(room.getGuestHouse().getId()); // Get ID from associated GuestHouse
         dto.setRoomNumber(room.getRoomNumber());
-        dto.setRoomType(room.getRoomType());
-        dto.setCapacity(room.getCapacity());
-        dto.setPricePerNight(room.getBasePrice());
         dto.setDescription(room.getDescription());
         dto.setAmenities(room.getAmenities());
         dto.setImageUrl(room.getImageUrl());
@@ -55,9 +54,6 @@ public class RoomServiceImplementations implements RoomServices {
         room.setGuestHouse(guestHouse);
 
         room.setRoomNumber(roomDTO.getRoomNumber());
-        room.setRoomType(roomDTO.getRoomType());
-        room.setCapacity(roomDTO.getCapacity());
-        room.setBasePrice(roomDTO.getPricePerNight());
         room.setDescription(roomDTO.getDescription());
         room.setAmenities(roomDTO.getAmenities());
         room.setImageUrl(roomDTO.getImageUrl());
@@ -79,12 +75,13 @@ public class RoomServiceImplementations implements RoomServices {
                     objectMapper.writeValueAsString(savedRoom), // New value as JSON
                     "New Room registered"
             );
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             System.err.println("Failed to log audit for Room creation: " + e.getMessage());
         }
         return convertToDTO(savedRoom);
     }
 
+    @Override
     public Optional<RoomDTO> getRoomById(Long id) {
         return roomRepository.findById(id)
                 .map(this::convertToDTO);
@@ -119,8 +116,6 @@ public class RoomServiceImplementations implements RoomServices {
                     .orElseThrow(() -> new RuntimeException("GuestHouse not found with ID: " + roomDTO.getGuestHouseId()));
             existingRoom.setGuestHouse(guestHouse); // Update GuestHouse association if changed
             existingRoom.setRoomNumber(roomDTO.getRoomNumber());
-            existingRoom.setCapacity(roomDTO.getCapacity());
-            existingRoom.setBasePrice(roomDTO.getPricePerNight());
             existingRoom.setDescription(roomDTO.getDescription());
 
             Room updatedRoom = roomRepository.save(existingRoom); // After save, lastModifiedBy is set

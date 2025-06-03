@@ -14,6 +14,7 @@ const routes: Routes = [
       { path: 'hotels', component: HotelsComponent },
       { path: 'my-bookings', component: MyBookingsComponent },
       { path: 'user-details', component: UserDetailsComponent },
+      { path: 'booking-page', component: BookingPageComponent },
       // Remove this direct route to booking page:
       { path: 'hotel/:hotelId/booking', component: BookingPageComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, // Default user route is Dashboard

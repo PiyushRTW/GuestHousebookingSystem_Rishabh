@@ -1,48 +1,51 @@
-<div class="admin-page-container">
+<div class="admin-page-container" [class.sidebar-closed]="!isSidebarOpen">
   <header class="admin-header">
     <div class="admin-header-left">
-      <button mat-icon-button>
-        <mat-icon>menu</mat-icon>
+      <button mat-icon-button class="menu-toggle" (click)="toggleSidebar()">
+        <mat-icon>{{ isSidebarOpen ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
-      <span class="admin-navigation-text">Admin Navigation</span>
+      <span class="admin-navigation-text">Admin Panel</span>
     </div>
-    <span class="admin-panel-text">Admin Panel</span>
     <div class="admin-header-right">
-      <span class="admin-username">Admin User Name</span>
-      <mat-icon class="admin-icon">account_circle</mat-icon>
-      <button mat-button class="logout-button">Logout</button>
+      <span class="admin-username">{{ adminName }}</span>
+      <mat-icon>account_circle</mat-icon>
+      <button mat-raised-button color="warn" class="logout-button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
     </div>
   </header>
-  <aside class="admin-sidebar">
-  <mat-nav-list>
-  <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active-link">
-    <mat-icon matListItemIcon>dashboard</mat-icon>
-    <span matListItemTitle>Dashboard</span>
-  </a>
-  <a mat-list-item routerLink="/admin/guests" routerLinkActive="active-link">
-    <mat-icon matListItemIcon>group</mat-icon>
-    <span matListItemTitle>Guests</span>
-  </a>
-  <a mat-list-item routerLink="/admin/hotels" routerLinkActive="active-link">
-    <mat-icon matListItemIcon>hotel</mat-icon>
-    <span matListItemTitle>Guest Houses</span>
-  </a>
-  <a mat-list-item routerLink="/admin/rooms" routerLinkActive="active-link">
-    <mat-icon matListItemIcon>meeting_room</mat-icon>
-    <span matListItemTitle>Rooms</span>
-  </a>
-  <a mat-list-item routerLink="/admin/admin-booking" routerLinkActive="active-link"> 
-    <mat-icon matListItemIcon>book_online</mat-icon>
-    <span matListItemTitle>Book Room</span>
-  </a>
-   <a mat-list-item routerLink="/admin/reservations-list" routerLinkActive="active-link"> 
-    <mat-icon matListItemIcon>list_alt</mat-icon>
-    <span matListItemTitle>Reservations</span>
-  </a>
-</mat-nav-list>
-</aside>
 
-  <main class="admin-content">
+  <aside class="admin-sidebar" [class.closed]="!isSidebarOpen">
+    <mat-nav-list>
+      <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>Dashboard</span>
+      </a>
+      <a mat-list-item routerLink="/admin/guests" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>group</mat-icon>
+        <span matListItemTitle>Guests</span>
+      </a>
+      <a mat-list-item routerLink="/admin/hotels" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>hotel</mat-icon>
+        <span matListItemTitle>Guest Houses</span>
+      </a>
+      <a mat-list-item routerLink="/admin/rooms" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>meeting_room</mat-icon>
+        <span matListItemTitle>Rooms</span>
+      </a>
+      <a mat-list-item routerLink="/admin/admin-booking" routerLinkActive="active-link"> 
+        <mat-icon matListItemIcon>book_online</mat-icon>
+        <span matListItemTitle>Book Room</span>
+      </a>
+      <a mat-list-item routerLink="/admin/reservations-list" routerLinkActive="active-link"> 
+        <mat-icon matListItemIcon>list_alt</mat-icon>
+        <span matListItemTitle>Reservations</span>
+      </a>
+    </mat-nav-list>
+  </aside>
+
+  <main class="admin-content" [class.sidebar-closed]="!isSidebarOpen">
     <router-outlet></router-outlet>
   </main>
 </div>

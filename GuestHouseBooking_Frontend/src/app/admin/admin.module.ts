@@ -26,12 +26,15 @@ import { ReactiveFormsModule } from '@angular/forms'; // Import ReactiveFormsMod
 import { MatSelectModule } from '@angular/material/select'; // Import if you add select fields
 import { MatDatepickerModule } from '@angular/material/datepicker'; // <-- Add this!
 import { MatNativeDateModule } from '@angular/material/core';
-import { AdminBookingComponent } from './admin-booking/admin-booking.component'; 
+import { AdminBookingComponent } from './admin-booking/admin-booking.component';
 import { MatPaginatorModule } from '@angular/material/paginator'; // <-- Add this
-import { MatSortModule } from '@angular/material/sort'; 
+import { MatSortModule } from '@angular/material/sort';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../shared/confirm-dialog/confirm-dialog.component';
 import { BookingDetailDialogComponent } from './booking-detail-dialog.component';
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
+import { BedConfigurationComponent } from './rooms/bed-configuration/bed-configuration.component';
+import { MatDividerModule } from '@angular/material/divider';
 
 @NgModule({
   declarations: [
@@ -45,7 +48,7 @@ import { ReservationsListComponent } from './reservations-list/reservations-list
     AdminBookingComponent,
     ReservationsListComponent, // <-- Declare it
     BookingDetailDialogComponent,
-  
+    BedConfigurationComponent
   ],
   imports: [
     CommonModule,
@@ -69,7 +72,9 @@ import { ReservationsListComponent } from './reservations-list/reservations-list
     MatDatepickerModule,
     MatNativeDateModule,
     MatPaginatorModule, // Add this
-    MatSortModule
+    MatSortModule,
+    MatSnackBarModule,
+    MatDividerModule
   ]
 })
 export class AdminModule { }

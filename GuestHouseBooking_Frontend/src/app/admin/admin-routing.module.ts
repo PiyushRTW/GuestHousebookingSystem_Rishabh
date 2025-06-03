@@ -8,6 +8,7 @@ import { RoomsComponent } from './rooms/rooms.component';
 import { HotelsComponent } from './hotels/hotels.component';
 import { AdminBookingComponent } from './admin-booking/admin-booking.component';
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
+import { BedConfigurationComponent } from './rooms/bed-configuration/bed-configuration.component';
 
 const routes: Routes = [
   {
@@ -17,6 +18,7 @@ const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'guests', component: GuestsComponent },
       { path: 'rooms', component: RoomsComponent },
+      { path: 'rooms/bed-configuration', component: BedConfigurationComponent },
       { path: 'hotels', component:  HotelsComponent},
       { path: 'admin-booking', component: AdminBookingComponent },
       { path: 'reservations-list', component: ReservationsListComponent },

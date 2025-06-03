@@ -3,6 +3,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-layout',
@@ -19,10 +20,21 @@ export class AdminLayoutComponent {
       shareReplay()
     );
 
-  constructor(private breakpointObserver: BreakpointObserver) {}
+  isSidebarOpen = true;
+  adminName = 'Admin User'; // This will be replaced with actual admin data later
+
+  constructor(private breakpointObserver: BreakpointObserver, private router: Router) {}
   // You could also move the toggle logic to the component class if needed
   toggleDrawer() {
     this.drawer.toggle();
   }
 
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  logout() {
+    // Here you'll add actual logout logic with JWT later
+    this.router.navigate(['/login']);
+  }
 }

@@ -1,16 +1,28 @@
 package com.Application.GuestHouseBooking.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "booking")
@@ -36,11 +48,6 @@ public class Booking {
 
     @Column(nullable = false)
     private LocalDate checkOutDate;
-
-    // numberOfGuests might still be relevant if a "bed" implies a bunk bed or shared sleeping space,
-    // but often for a single bed, it would imply 1 guest. Let's keep it for flexibility.
-    @Column(nullable = false)
-    private Integer numberOfGuests;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

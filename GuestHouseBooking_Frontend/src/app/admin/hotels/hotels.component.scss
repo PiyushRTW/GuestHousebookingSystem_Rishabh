@@ -1,58 +1,68 @@
-.hotels-container {
+.guest-houses-container {
   padding: 20px;
 
-  h2 {
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+
+    h1 {
+      margin: 0;
+    }
   }
 
-  button[mat-raised-button] {
-    margin-bottom: 20px;
-  }
-
-  .no-hotels-message {
-    padding: 20px;
+  .loading-state,
+  .error-state,
+  .no-data-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
     text-align: center;
-    color: #555;
-    margin-top: 20px;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+    }
+
+    p {
+      margin: 16px 0;
+      color: rgba(0, 0, 0, 0.6);
+    }
   }
 
-  .hotel-list {
-    margin-top: 20px;
-
-    mat-list-item {
-      margin-bottom: 10px;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      padding: 10px 15px;
+  .guest-houses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    
+    .guest-house-card {
+      height: 100%;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      .mat-list-item-content {
-        display: flex;
+      flex-direction: column;
+      
+      mat-card-content {
         flex-grow: 1;
-        align-items: center;
-      }
-
-      h3 {
-        margin: 0;
-        font-size: 1.2em;
-        font-weight: 500;
-        margin-right: 15px; // Space between title and details
-      }
-
-      p {
-        margin: 0;
-        color: #666;
-        font-size: 0.9em;
-        &:not(:last-child) {
-          margin-right: 10px; // Space between lines
+        
+        p {
+          margin: 8px 0;
         }
       }
 
-      .hotel-actions {
+      img {
+        height: 200px;
+        object-fit: cover;
+      }
+
+      mat-card-actions {
+        padding: 8px;
         display: flex;
-        gap: 5px;
+        justify-content: flex-end;
+        gap: 8px;
       }
     }
   }

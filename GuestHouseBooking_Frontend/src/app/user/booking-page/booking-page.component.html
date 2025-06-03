@@ -2,14 +2,17 @@
   <mat-card class="booking-card">
     <mat-card-title>Book a Room</mat-card-title>
     <mat-card-content>
-      <div *ngIf="loading" class="loading-indicator">Loading...</div>
+      <div *ngIf="loading" class="loading-indicator">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading...</p>
+      </div>
       <form *ngIf="!loading" [formGroup]="bookingForm" class="booking-form">
         <div class="form-section">
           <h2>Booking Details</h2>
           <div class="row">
             <mat-form-field class="full-width">
               <mat-label>Arrival Date</mat-label>
-              <input matInput [matDatepicker]="arrivalPicker" formControlName="arrivalDate" required>
+              <input matInput [matDatepicker]="arrivalPicker" formControlName="arrivalDate" required [min]="today">
               <mat-datepicker-toggle matSuffix [for]="arrivalPicker"></mat-datepicker-toggle>
               <mat-datepicker #arrivalPicker></mat-datepicker>
               <mat-error *ngIf="bookingForm.get('arrivalDate')?.hasError('required')">
@@ -18,7 +21,7 @@
             </mat-form-field>
             <mat-form-field class="full-width">
               <mat-label>Departure Date</mat-label>
-              <input matInput [matDatepicker]="departurePicker" formControlName="departureDate" required>
+              <input matInput [matDatepicker]="departurePicker" formControlName="departureDate" required [min]="bookingForm.get('arrivalDate')?.value || today">
               <mat-datepicker-toggle matSuffix [for]="departurePicker"></mat-datepicker-toggle>
               <mat-datepicker #departurePicker></mat-datepicker>
               <mat-error *ngIf="bookingForm.get('departureDate')?.hasError('required')">
@@ -44,7 +47,7 @@
               <mat-label>Room</mat-label>
               <mat-select formControlName="room" required>
                 <mat-option *ngFor="let room of rooms" [value]="room.id">
-                  {{ room.name }}
+                  Room {{ room.roomNumber }}
                 </mat-option>
               </mat-select>
               <mat-error *ngIf="bookingForm.get('room')?.hasError('required')">
@@ -53,17 +56,17 @@
             </mat-form-field>
           </div>
           <div class="row">
-           <mat-form-field class="full-width">
-  <mat-label>Bed</mat-label>
-  <mat-select formControlName="bed" required>
-    <mat-option *ngFor="let bed of beds" [value]="bed.id">
-      {{ bed.name }}
-    </mat-option>
-  </mat-select>
-  <mat-error *ngIf="bookingForm.get('bed')?.hasError('required')">
-    Bed is required.
-  </mat-error>
-</mat-form-field>
+            <mat-form-field class="full-width">
+              <mat-label>Bed</mat-label>
+              <mat-select formControlName="bed" required>
+                <mat-option *ngFor="let bed of beds" [value]="bed.id">
+                  Bed {{ bed.bedNumber }} (₹{{ bed.pricePerNight }}/night)
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="bookingForm.get('bed')?.hasError('required')">
+                Bed is required.
+              </mat-error>
+            </mat-form-field>
           </div>
         </div>
 
@@ -97,6 +100,12 @@
               </mat-error>
             </mat-form-field>
           </div>
+        </div>
+
+        <div class="price-summary" *ngIf="bookingForm.get('bed')?.value && bookingForm.get('arrivalDate')?.value && bookingForm.get('departureDate')?.value">
+          <h3>Price Summary</h3>
+          <p>Number of Nights: {{ calculateNumberOfNights() }}</p>
+          <p class="total-price">Total Price: ₹{{ calculateTotalAmount() }}</p>
         </div>
       </form>
     </mat-card-content>

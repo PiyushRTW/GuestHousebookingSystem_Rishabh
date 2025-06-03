@@ -1,13 +1,21 @@
-<div class="user-page-container">
+<div class="user-page-container" [class.sidebar-closed]="!isSidebarOpen">
   <header class="user-header">
-    <div class="app-logo">Application logo here</div>
+    <div class="header-left">
+      <button mat-icon-button class="menu-toggle" (click)="toggleSidebar()">
+        <mat-icon>{{ isSidebarOpen ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+      <div class="app-logo">GuestHouse Booking</div>
+    </div>
     <div class="user-info">
-      <span class="username">Here username will be displayed</span>
-      <button mat-button class="logout-button">logout</button>
+      <span class="username">{{ username }}</span>
+      <button mat-raised-button color="warn" class="logout-button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
     </div>
   </header>
 
-  <aside class="user-sidebar">
+  <aside class="user-sidebar" [class.closed]="!isSidebarOpen">
     <mat-nav-list>
       <mat-list-item routerLink="hotels" routerLinkActive="active-link">
         <mat-icon>hotel</mat-icon>
@@ -24,7 +32,7 @@
     </mat-nav-list>
   </aside>
 
-  <main class="user-content">
+  <main class="user-content" [class.sidebar-closed]="!isSidebarOpen">
     <router-outlet></router-outlet>
   </main>
 </div>

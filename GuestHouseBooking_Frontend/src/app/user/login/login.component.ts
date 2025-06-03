@@ -28,4 +28,8 @@ export class LoginComponent {
       alert('Please enter your username and password.');
     }
   }
+
+  onRegister() {
+    this.router.navigate(['/user/registration']);
+  }
 }

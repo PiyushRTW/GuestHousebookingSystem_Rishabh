@@ -15,31 +15,44 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Distribute space between left, center, right */
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .admin-header-left {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.menu-toggle {
+  transition: transform 0.3s ease;
+  color: white;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 .admin-navigation-text {
-  margin-left: 8px;
+  font-size: 1.2em;
+  font-weight: 500;
 }
 
 .admin-header-right {
   display: flex;
   align-items: center;
-  margin-left: -30px;
+  gap: 16px;
 }
 
 .admin-username {
-  margin-right: 8px;
+  font-weight: 500;
 }
 
 .logout-button {
-  margin-left: 25px;
-  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .admin-icon {
@@ -47,24 +60,57 @@
 }
 
 .admin-sidebar {
-  width: 220px;
-  background-color: #f0f0f0;
-  padding-top: 56px;
+  width: 240px;
+  background-color: #ffffff;
+  padding: 16px;
   position: fixed;
-  top: 0;
+  top: 64px;
   left: 0;
   bottom: 0;
   overflow-y: auto;
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+
+  &.closed {
+    transform: translateX(-240px);
+  }
+
+  mat-nav-list {
+    a {
+      margin-bottom: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+
+      &:hover {
+        background-color: rgba(103, 58, 183, 0.04);
+      }
+
+      mat-icon {
+        margin-right: 16px;
+        color: #673ab7;
+      }
+    }
+  }
 }
 
 .admin-content {
   flex-grow: 1;
-  padding: 16px;
-  padding-left: 240px;
-  padding-top: 72px;
+  padding: 24px;
+  margin-top: 64px;
+  margin-left: 240px;
+  transition: margin-left 0.3s ease;
+  background-color: #f5f5f5;
+
+  &.sidebar-closed {
+    margin-left: 0;
+  }
 }
 
 .active-link {
-  background-color: #ddd;
-  font-weight: bold;
+  background-color: rgba(103, 58, 183, 0.1) !important;
+  color: #673ab7 !important;
+
+  mat-icon {
+    color: #673ab7 !important;
+  }
 }

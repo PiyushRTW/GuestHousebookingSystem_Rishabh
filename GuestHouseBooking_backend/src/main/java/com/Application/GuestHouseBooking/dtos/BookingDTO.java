@@ -15,7 +15,6 @@ public class BookingDTO {
     private Long bedId; // ID of the specific bed being booked
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
-    private Integer numberOfGuests;
     private Booking.BookingStatus status;
     private BigDecimal totalPrice;
     private String specialRequests;

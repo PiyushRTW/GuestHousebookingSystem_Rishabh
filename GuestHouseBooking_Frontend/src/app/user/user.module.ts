@@ -24,6 +24,7 @@ import { MatListModule } from '@angular/material/list'; // Import
 import { MatIconModule } from '@angular/material/icon';
 import { HotelsComponent } from './hotels/hotels.component'; // Import
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RegistrationComponent } from './registration/registration.component';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     BookingPageComponent,
     HotelsComponent, // Declare
     MyBookingsComponent, // Declare
-    UserDetailsComponent, HotelsComponent // Declare
+    UserDetailsComponent, HotelsComponent, RegistrationComponent // Declare
   ],
   imports: [
     CommonModule,

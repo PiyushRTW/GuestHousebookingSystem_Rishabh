@@ -1,24 +1,24 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.Application.GuestHouseBooking.MailServices.MailService;
 import com.Application.GuestHouseBooking.dtos.BookingDTO;
 import com.Application.GuestHouseBooking.entity.Bed;
 import com.Application.GuestHouseBooking.entity.Booking;
-import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.BedRepository;
 import com.Application.GuestHouseBooking.repository.BookingRepository;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 import com.Application.GuestHouseBooking.service.BookingServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImplementations implements BookingServices {
@@ -50,7 +50,6 @@ public class BookingServiceImplementations implements BookingServices {
         dto.setBedId(booking.getBed().getId()); // Get ID from associated Bed
         dto.setCheckInDate(booking.getCheckInDate());
         dto.setCheckOutDate(booking.getCheckOutDate());
-        dto.setNumberOfGuests(booking.getNumberOfGuests());
         dto.setStatus(booking.getStatus());
         dto.setTotalPrice(booking.getTotalPrice());
         dto.setSpecialRequests(booking.getSpecialRequests());
@@ -74,20 +73,15 @@ public class BookingServiceImplementations implements BookingServices {
         booking.setBed(bed); // Set the Bed
         booking.setCheckInDate(bookingDTO.getCheckInDate());
         booking.setCheckOutDate(bookingDTO.getCheckOutDate());
-        booking.setNumberOfGuests(bookingDTO.getNumberOfGuests());
         booking.setStatus(bookingDTO.getStatus() != null ? bookingDTO.getStatus() : Booking.BookingStatus.PENDING); // Default status
         booking.setSpecialRequests(bookingDTO.getSpecialRequests());
 
-        // Calculate total price: assuming Bed gets its price from its associated Room
-        Room room = bed.getRoom(); // Access the Room through the Bed
-        if (room == null) {
-            throw new RuntimeException("Bed is not associated with a Room, cannot calculate price.");
-        }
+        // Calculate total price based on bed's price per night
         long numberOfNights = ChronoUnit.DAYS.between(booking.getCheckInDate(), booking.getCheckOutDate());
         if (numberOfNights <= 0) {
             throw new RuntimeException("Check-out date must be after check-in date.");
         }
-        BigDecimal calculatedPrice = room.getBasePrice().multiply(BigDecimal.valueOf(numberOfNights));
+        BigDecimal calculatedPrice = bed.getPricePerNight().multiply(BigDecimal.valueOf(numberOfNights));
         booking.setTotalPrice(calculatedPrice);
 
         return booking;
@@ -98,12 +92,6 @@ public class BookingServiceImplementations implements BookingServices {
     public BookingDTO createBooking(BookingDTO bookingDTO) {
         if (bookingDTO.getCheckInDate().isAfter(bookingDTO.getCheckOutDate())) {
             throw new RuntimeException("Check-in date cannot be after check-out date.");
-        }
-        if (bookingDTO.getNumberOfGuests() <= 0) {
-            throw new RuntimeException("Number of guests must be positive.");
-        }
-        if (bookingDTO.getNumberOfGuests() > 1) { // Enforcing 1 guest per bed booking
-            throw new RuntimeException("This booking type supports only 1 guest per bed.");
         }
 
         Bed bed = bedRepository.findById(bookingDTO.getBedId())
@@ -190,17 +178,12 @@ public class BookingServiceImplementations implements BookingServices {
             existingBooking.setBed(bed);
             existingBooking.setCheckInDate(bookingDTO.getCheckInDate());
             existingBooking.setCheckOutDate(bookingDTO.getCheckOutDate());
-            existingBooking.setNumberOfGuests(bookingDTO.getNumberOfGuests());
             existingBooking.setStatus(bookingDTO.getStatus());
             existingBooking.setSpecialRequests(bookingDTO.getSpecialRequests());
 
-            // Recalculate price if dates or bed changed
-            Room room = bed.getRoom();
-            if (room == null) {
-                throw new RuntimeException("Bed is not associated with a Room, cannot calculate price.");
-            }
+            // Recalculate price based on bed's price per night
             long numberOfNights = ChronoUnit.DAYS.between(existingBooking.getCheckInDate(), existingBooking.getCheckOutDate());
-            BigDecimal calculatedPrice = room.getBasePrice().multiply(BigDecimal.valueOf(numberOfNights));
+            BigDecimal calculatedPrice = bed.getPricePerNight().multiply(BigDecimal.valueOf(numberOfNights));
             existingBooking.setTotalPrice(calculatedPrice);
 
             Booking updatedBooking = bookingRepository.save(existingBooking);

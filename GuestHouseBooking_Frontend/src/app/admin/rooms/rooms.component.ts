@@ -1,13 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl } from '@angular/forms'; // <-- Import AbstractControl
-import { Hotel } from '../hotels/hotels.component'; // Adjust path if your Hotel interface is elsewhere
-
-// Define the submission interface for clarity
-export interface RoomConfigSubmission {
-  hotelId: number | null;
-  singleBedRoomsToAdd: number;
-  doubleBedRoomsToAdd: number;
-}
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RoomService, RoomDTO } from '../../services/rooms/room.service';
+import { GuestHouseService, GuestHouseDTO } from '../../services/guesthouse/guest-house.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-rooms',
@@ -15,101 +11,174 @@ export interface RoomConfigSubmission {
   styleUrls: ['./rooms.component.scss']
 })
 export class RoomsComponent implements OnInit {
-  roomConfigForm!: FormGroup;
-  hotels: Hotel[] = []; // List of hotels for the dropdown
+  roomForm!: FormGroup;
+  guestHouses: GuestHouseDTO[] = [];
+  rooms: RoomDTO[] = [];
+  isLoading = false;
 
-  constructor(private fb: FormBuilder) { }
+  constructor(
+    private fb: FormBuilder,
+    private roomService: RoomService,
+    private guestHouseService: GuestHouseService,
+    private snackBar: MatSnackBar,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
-    this.loadMockHotels(); // Load mock hotels for the dropdown
+    this.loadGuestHouses();
     this.initForm();
   }
 
-  // Initialize the reactive form
   initForm(): void {
-    this.roomConfigForm = this.fb.group({
-      hotelId: [null, Validators.required],
-      singleBedRoomsToAdd: [0, [Validators.required, Validators.min(0)]],
-      doubleBedRoomsToAdd: [0, [Validators.required, Validators.min(0)]]
-    }, {
-      // <-- IMPORTANT: Assign the validator here in the second argument of fb.group()
-      // You can define it as a static method OR as an arrow function to preserve 'this' context,
-      // but for a validator that doesn't need 'this', a static method is fine.
-      validators: this.atLeastOneRoomValidator // Referencing the method
+    this.roomForm = this.fb.group({
+      guestHouseId: [null, Validators.required],
+      roomNumber: ['', Validators.required],
+      description: [''],
+      amenities: ['']
+    });
+
+    // Load rooms when guest house is selected
+    this.roomForm.get('guestHouseId')?.valueChanges.subscribe(guestHouseId => {
+      if (guestHouseId) {
+        this.loadRooms(guestHouseId);
+      } else {
+        this.rooms = [];
+      }
     });
   }
 
-  // Define the custom validator as a method of the class
-  // It receives an AbstractControl, but we know it will be a FormGroup in this context.
-  atLeastOneRoomValidator: ValidatorFn = (control: AbstractControl): { [key: string]: any } | null => {
-    const formGroup = control as FormGroup; // Cast to FormGroup
-    const single = formGroup.get('singleBedRoomsToAdd')?.value || 0;
-    const double = formGroup.get('doubleBedRoomsToAdd')?.value || 0;
-
-    return (single > 0 || double > 0) ? null : { noRoomsAdded: true };
-  };
-
-  // Simulate loading hotels (replace with HotelService in the future)
-  loadMockHotels(): void {
-    this.hotels = [
-      {
-        id: 1, name: 'Grand Plaza Hotel', address: 'City Center', description: 'Luxury hotel.',
-        rating: 4
+  loadGuestHouses(): void {
+    this.isLoading = true;
+    this.guestHouseService.getAllGuestHouses().subscribe({
+      next: (guestHouses) => {
+        this.guestHouses = guestHouses;
+        this.isLoading = false;
       },
-      {
-        id: 2, name: 'Riverside Inn', address: 'Near River', description: 'Cozy inn.',
-        rating: 4
-      },
-      {
-        id: 3, name: 'Mountain View Resort', address: 'Mountain Hills', description: 'Scenic resort.',
-        rating: 5
+      error: (error) => {
+        console.error('Error loading guest houses:', error);
+        let errorMessage = 'Error loading guest houses. ';
+        if (error.error?.message) {
+          errorMessage += error.error.message;
+        } else if (error.status === 0) {
+          errorMessage += 'Could not connect to the server. Please check your connection.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000
+        });
+        this.isLoading = false;
       }
-    ];
+    });
   }
 
-  // Handle form submission
-  onAddRooms(): void {
-    // Manually update validity if using cross-field validators before checking form.valid
-    // This is important because cross-field validators run less frequently by default.
-    this.roomConfigForm.updateValueAndValidity();
+  loadRooms(guestHouseId: number): void {
+    this.isLoading = true;
+    this.rooms = []; // Clear existing rooms while loading
+    this.roomService.getRoomsByGuestHouse(guestHouseId).subscribe({
+      next: (rooms) => {
+        this.rooms = rooms;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading rooms:', error);
+        let errorMessage = 'Error loading rooms. ';
+        if (error.error?.message) {
+          errorMessage += error.error.message;
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000
+        });
+        this.isLoading = false;
+      }
+    });
+  }
 
-    if (this.roomConfigForm.valid) {
-      const roomConfig: RoomConfigSubmission = this.roomConfigForm.value;
-      console.log('Room configuration to be submitted:', roomConfig);
+  onAddRoom(): void {
+    if (this.roomForm.valid) {
+      this.isLoading = true;
+      const roomData = {
+        ...this.roomForm.value
+      };
 
-      alert(`Adding ${roomConfig.singleBedRoomsToAdd} single rooms and ${roomConfig.doubleBedRoomsToAdd} double rooms to Hotel ID: ${roomConfig.hotelId}`);
-
-      // Reset the form after successful submission
-      this.roomConfigForm.reset({
-        hotelId: null,
-        singleBedRoomsToAdd: 0,
-        doubleBedRoomsToAdd: 0
-      });
-      // Clear validation errors after reset
-      Object.keys(this.roomConfigForm.controls).forEach(key => {
-        this.roomConfigForm.get(key)?.setErrors(null);
-        this.roomConfigForm.get(key)?.markAsUntouched(); // Also reset touched state
-        this.roomConfigForm.get(key)?.markAsPristine();  // And pristine state
-      });
-      // For form-level error
-      this.roomConfigForm.setErrors(null);
-      this.roomConfigForm.markAsUntouched();
-      this.roomConfigForm.markAsPristine();
-
-    } else {
-      this.roomConfigForm.markAllAsTouched();
-      console.error('Form is invalid. Please check the fields.');
-      Object.keys(this.roomConfigForm.controls).forEach(key => {
-        const controlErrors = this.roomConfigForm.get(key)?.errors;
-        if (controlErrors != null) {
-          console.log('Control: ' + key + ', Errors: ' + JSON.stringify(controlErrors));
+      this.roomService.createRoom(roomData).subscribe({
+        next: (room) => {
+          this.snackBar.open('Room added successfully!', 'Close', {
+            duration: 3000
+          });
+          this.loadRooms(roomData.guestHouseId);
+          this.resetForm(roomData.guestHouseId);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error creating room:', error);
+          let errorMessage = 'Error creating room. ';
+          if (error.error?.message) {
+            errorMessage += error.error.message;
+          } else {
+            errorMessage += 'Please try again.';
+          }
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 5000
+          });
+          this.isLoading = false;
         }
       });
-      // Also log form-level errors
-      const formErrors = this.roomConfigForm.errors;
-      if (formErrors) {
-        console.log('Form-level errors:', JSON.stringify(formErrors));
-      }
+    } else {
+      this.roomForm.markAllAsTouched();
+      this.snackBar.open('Please fill in all required fields correctly.', 'Close', {
+        duration: 3000
+      });
     }
+  }
+
+  deleteRoom(roomId: number): void {
+    if (confirm('Are you sure you want to delete this room? This will also delete all associated beds.')) {
+      this.isLoading = true;
+      this.roomService.deleteRoom(roomId).subscribe({
+        next: () => {
+          this.snackBar.open('Room deleted successfully', 'Close', {
+            duration: 3000
+          });
+          this.loadRooms(this.roomForm.get('guestHouseId')?.value);
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error deleting room:', error);
+          let errorMessage = 'Error deleting room. ';
+          if (error.error?.message) {
+            errorMessage += error.error.message;
+          } else {
+            errorMessage += 'Please try again.';
+          }
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 5000
+          });
+          this.isLoading = false;
+        }
+      });
+    }
+  }
+
+  configureBeds(roomId: number): void {
+    this.router.navigate(['/admin/rooms/bed-configuration'], { queryParams: { roomId } });
+  }
+
+  private resetForm(guestHouseId: number): void {
+    this.roomForm.patchValue({
+      guestHouseId: guestHouseId,
+      roomNumber: '',
+      description: '',
+      amenities: ''
+    });
+    Object.keys(this.roomForm.controls).forEach(key => {
+      const control = this.roomForm.get(key);
+      if (key !== 'guestHouseId') {
+        control?.markAsUntouched();
+        control?.markAsPristine();
+      }
+    });
   }
 }

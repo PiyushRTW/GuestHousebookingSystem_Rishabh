@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
-import { Hotel } from '../hotels/hotels.component';
+import { GuestHouse } from '../../shared/models/guesthouse.model';
 
 
 // If you prefer not to create room.model.ts, define it here:
@@ -22,7 +22,7 @@ export interface Room {
 export class AdminBookingComponent implements OnInit {
 
   bookingForm!: FormGroup;
-  hotels: Hotel[] = [];
+  hotels: GuestHouse[] = [];
   allRooms: Room[] = []; // All mock rooms
   availableRooms: Room[] = []; // Filtered rooms based on hotel and dates
 
@@ -83,9 +83,51 @@ export class AdminBookingComponent implements OnInit {
   // Load mock data for hotels and rooms
   loadMockData(): void {
     this.hotels = [
-      { id: 1, name: 'Grand Hyatt', address: '123 Park Ave', rating: 5, imageUrl: 'assets/hotel1.jpg', description: 'Luxury hotel.' },
-      { id: 2, name: 'Urban Oasis', address: '456 Main St', rating: 4, imageUrl: 'assets/hotel2.jpg', description: 'Modern hotel.' },
-      { id: 3, name: 'Riverside Inn', address: '789 River Rd', rating: 3, imageUrl: 'assets/hotel3.jpg', description: 'Cozy inn.' },
+      {
+        id: 1,
+        name: 'Grand Hyatt',
+        address: '123 Park Ave',
+        city: 'New York',
+        state: 'NY',
+        country: 'USA',
+        description: 'Luxury hotel.',
+        amenities: 'WiFi, Pool, Gym',
+        contactNumber: '+1-234-567-8900',
+        email: 'info@grandhyatt.com',
+        imageUrl: 'assets/hotel1.jpg',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 2,
+        name: 'Urban Oasis',
+        address: '456 Main St',
+        city: 'Chicago',
+        state: 'IL',
+        country: 'USA',
+        description: 'Modern hotel.',
+        amenities: 'WiFi, Restaurant',
+        contactNumber: '+1-234-567-8901',
+        email: 'info@urbanoasis.com',
+        imageUrl: 'assets/hotel2.jpg',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        name: 'Riverside Inn',
+        address: '789 River Rd',
+        city: 'Denver',
+        state: 'CO',
+        country: 'USA',
+        description: 'Cozy inn.',
+        amenities: 'WiFi, Parking',
+        contactNumber: '+1-234-567-8902',
+        email: 'info@riversideinn.com',
+        imageUrl: 'assets/hotel3.jpg',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
     ];
 
     this.allRooms = [

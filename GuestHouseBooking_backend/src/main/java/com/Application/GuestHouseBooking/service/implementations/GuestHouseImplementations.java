@@ -1,16 +1,17 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.Application.GuestHouseBooking.dtos.GuestHouseDTO;
 import com.Application.GuestHouseBooking.entity.GuestHouse;
 import com.Application.GuestHouseBooking.repository.GuestHouseRepository;
 import com.Application.GuestHouseBooking.service.GuestHouseServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class GuestHouseImplementations implements GuestHouseServices {
@@ -87,10 +88,16 @@ public class GuestHouseImplementations implements GuestHouseServices {
     }
 
     public List<GuestHouseDTO> getAllGuestHouses() {
-        List<GuestHouse> guestHouses = guestHouseRepository.findAll();
-        return guestHouses.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        try {
+            List<GuestHouse> guestHouses = guestHouseRepository.findAll();
+            return guestHouses.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error retrieving guest houses from database: " + e.getMessage());
+            e.printStackTrace(); // Print stack trace for debugging
+            throw new RuntimeException("Failed to retrieve guest houses", e);
+        }
     }
 
     public Optional<GuestHouseDTO> updateGuestHouse(Long id, GuestHouseDTO guestHouseDTO) {

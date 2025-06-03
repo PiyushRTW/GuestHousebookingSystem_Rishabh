@@ -33,8 +33,6 @@ public class BedServicesImplementations implements BedServices {
         BedDTO dto = new BedDTO();
         dto.setId(bed.getId());
         dto.setRoomId(bed.getRoom().getId()); // Get ID from associated Room
-        // Removed: dto.setBedType(bed.getBedType());
-        // Removed: dto.setCount(bed.getCount());
         dto.setCreatedAt(bed.getCreatedAt());
         dto.setUpdatedAt(bed.getUpdatedAt());
         return dto;
@@ -49,8 +47,6 @@ public class BedServicesImplementations implements BedServices {
                 .orElseThrow(() -> new RuntimeException("Room not found with ID: " + bedDTO.getRoomId()));
         bed.setRoom(room);
 
-        // Removed: bed.setBedType(bedDTO.getBedType());
-        // Removed: bed.setCount(bedDTO.getCount());
         return bed;
     }
     // --- CRUD Operations ---

@@ -1,26 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { of, Subscription } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
-interface GuestHouse {
-    id: number;
-    name: string;
-}
-
-interface Room {
-    id: number;
-    name: number;
-    guestHouseId: number;
-}
-
-interface Bed {
-    id: number;
-    name: string;
-    roomId: number;
-}
+import { GuestHouseService, GuestHouseDTO } from 'src/app/services/guesthouse/guest-house.service';
+import { RoomService, RoomDTO } from 'src/app/services/rooms/room.service';
+import { BedService, BedDTO } from 'src/app/services/beds/bed.service';
+import { BookingService, BookingDTO } from 'src/app/services/bookings/booking.service';
 
 @Component({
     selector: 'app-booking-page',
@@ -30,17 +16,24 @@ interface Bed {
 export class BookingPageComponent implements OnInit, OnDestroy {
     bookingForm: FormGroup;
     isLoggedIn = true;
-    guestHouses: GuestHouse[] = [];
-    rooms: Room[] = [];
-    beds: Bed[] = [];
+    guestHouses: GuestHouseDTO[] = [];
+    rooms: RoomDTO[] = [];
+    beds: BedDTO[] = [];
     loading = true;
     guestHouseSubscription: Subscription;
     roomSubscription: Subscription;
+    userId: number = 1; // This should come from your auth service
+    today = new Date();
+    selectedRoom: RoomDTO | null = null;
 
     constructor(
         private fb: FormBuilder,
         private router: Router,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private guestHouseService: GuestHouseService,
+        private roomService: RoomService,
+        private bedService: BedService,
+        private bookingService: BookingService
     ) {
         this.bookingForm = this.fb.group({
             arrivalDate: ['', Validators.required],
@@ -58,39 +51,24 @@ export class BookingPageComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.loading = true;
-        of(null)
-            .pipe(delay(1000))
-            .subscribe(() => {
-                this.guestHouses = [
-                    { id: 1, name: 'Guest House A' },
-                    { id: 2, name: 'Guest House B' },
-                    { id: 3, name: 'Guest House C' }
-                ];
-                this.rooms = [
-                    { id: 101, name: 101, guestHouseId: 1 },
-                    { id: 102, name: 102, guestHouseId: 1 },
-                    { id: 201, name: 201, guestHouseId: 2 },
-                    { id: 202, name: 202, guestHouseId: 2 },
-                    { id: 301, name: 301, guestHouseId: 3 },
-                    { id: 302, name: 302, guestHouseId: 3 },
-                ];
-                this.beds = [
-                    { id: 1, name: 'Bed 1', roomId: 101 },
-                    { id: 2, name: 'Bed 2', roomId: 101 },
-                    { id: 3, name: 'Bed 1', roomId: 102 },
-                    { id: 4, name: 'Bed 2', roomId: 102 },
-                    { id: 5, name: 'Bed 1', roomId: 201 },
-                    { id: 6, name: 'Bed 2', roomId: 201 },
-                    { id: 7, name: 'Bed 1', roomId: 202 },
-                    { id: 8, name: 'Bed 2', roomId: 202 },
-                    { id: 9, name: 'Bed 1', roomId: 301 },
-                    { id: 10, name: 'Bed 2', roomId: 301 },
-                    { id: 11, name: 'Bed 1', roomId: 302 },
-                    { id: 12, name: 'Bed 2', roomId: 302 },
-                ];
+        this.loadGuestHouses();
+        this.initFormListeners();
+    }
+
+    loadGuestHouses() {
+        this.guestHouseService.getAllGuestHouses().subscribe(
+            (guestHouses) => {
+                this.guestHouses = guestHouses;
                 this.loading = false;
-                this.initFormListeners();
-            });
+            },
+            (error) => {
+                console.error('Error loading guest houses:', error);
+                this.snackBar.open('Error loading guest houses. Please try again.', 'Close', {
+                    duration: 3000
+                });
+                this.loading = false;
+            }
+        );
     }
 
     ngOnDestroy() {
@@ -102,42 +80,70 @@ export class BookingPageComponent implements OnInit, OnDestroy {
         const guestHouseControl = this.bookingForm.get('guestHouse');
         const roomControl = this.bookingForm.get('room');
 
-        this.guestHouseSubscription = guestHouseControl ? guestHouseControl.valueChanges.subscribe(guestHouseId => {
-            this.populateRooms(guestHouseId);
-            this.bookingForm.get('room')?.setValue('');
-            this.bookingForm.get('room')?.updateValueAndValidity();
-            this.populateBeds(0);
-            this.bookingForm.get('bed')?.setValue('');
-            this.bookingForm.get('bed')?.updateValueAndValidity();
-        }) : new Subscription();
+        this.guestHouseSubscription = guestHouseControl?.valueChanges.subscribe(guestHouseId => {
+            if (guestHouseId) {
+                this.loadRooms(guestHouseId);
+                this.bookingForm.get('room')?.setValue('');
+                this.bookingForm.get('bed')?.setValue('');
+                this.selectedRoom = null;
+            }
+        }) || new Subscription();
 
-
-        this.roomSubscription = roomControl ? roomControl.valueChanges.subscribe(roomId => {
-            this.populateBeds(roomId);
-            this.bookingForm.get('bed')?.setValue('');
-            this.bookingForm.get('bed')?.updateValueAndValidity();
-        }) : new Subscription();
+        this.roomSubscription = roomControl?.valueChanges.subscribe(roomId => {
+            if (roomId) {
+                this.loadBeds(roomId);
+                this.bookingForm.get('bed')?.setValue('');
+                this.selectedRoom = this.rooms.find(room => room.id === roomId) || null;
+            } else {
+                this.selectedRoom = null;
+            }
+        }) || new Subscription();
     }
 
-    populateRooms(guestHouseId: number ) {
-        this.rooms = this.getRoomsByGuestHouse(guestHouseId);
+    loadRooms(guestHouseId: number) {
+        this.loading = true;
+        this.roomService.getRoomsByGuestHouse(guestHouseId).subscribe(
+            (rooms) => {
+                this.rooms = rooms.map(room => ({
+                    ...room,
+                    description: room.description || '',
+                    amenities: room.amenities || '',
+                    imageUrl: room.imageUrl || '',
+                    createdAt: room.createdAt ? new Date(room.createdAt) : undefined,
+                    updatedAt: room.updatedAt ? new Date(room.updatedAt) : undefined
+                }));
+                this.loading = false;
+            },
+            (error) => {
+                console.error('Error loading rooms:', error);
+                this.snackBar.open('Error loading rooms. Please try again.', 'Close', {
+                    duration: 3000
+                });
+                this.loading = false;
+            }
+        );
     }
 
-    populateBeds(roomId: number) {
-        this.beds = this.getBedsByRoom(roomId);
-    }
-
-    getRoomsByGuestHouse(guestHouseId: number): Room[] {
-        return this.rooms.filter(room => room.guestHouseId === guestHouseId);
-    }
-
-    getBedsByRoom(roomId: number): Bed[] {
-        return this.beds.filter(bed => bed.roomId === roomId);
+    loadBeds(roomId: number) {
+        this.loading = true;
+        this.bedService.getBedsByRoomId(roomId).subscribe(
+            (beds) => {
+                this.beds = beds;
+                this.loading = false;
+            },
+            (error) => {
+                console.error('Error loading beds:', error);
+                this.snackBar.open('Error loading beds. Please try again.', 'Close', {
+                    duration: 3000
+                });
+                this.loading = false;
+            }
+        );
     }
 
     roomValidator(control: FormControl) {
         const guestHouseControl = control.parent?.get('guestHouse');
-        if (guestHouseControl && guestHouseControl.value && this.getRoomsByGuestHouse(guestHouseControl.value).length > 0) {
+        if (guestHouseControl && guestHouseControl.value) {
             return Validators.required(control);
         }
         return null;
@@ -145,26 +151,68 @@ export class BookingPageComponent implements OnInit, OnDestroy {
 
     bedValidator(control: FormControl) {
         const roomControl = control.parent?.get('room');
-        if (roomControl && roomControl.value && this.getBedsByRoom(roomControl.value).length > 0) {
+        if (roomControl && roomControl.value) {
             return Validators.required(control);
         }
         return null;
     }
 
+    calculateNumberOfNights(): number {
+        const arrivalDate = this.bookingForm.get('arrivalDate')?.value;
+        const departureDate = this.bookingForm.get('departureDate')?.value;
+        if (arrivalDate && departureDate) {
+            return Math.ceil((new Date(departureDate).getTime() - new Date(arrivalDate).getTime()) / (1000 * 60 * 60 * 24));
+        }
+        return 0;
+    }
+
+    calculateTotalAmount(): number {
+        const selectedBed = this.beds.find(bed => bed.id === this.bookingForm.get('bed')?.value) as BedDTO;
+        if (selectedBed && this.bookingForm.get('arrivalDate')?.value && this.bookingForm.get('departureDate')?.value) {
+            return this.calculateNumberOfNights() * selectedBed.pricePerNight;
+        }
+        return 0;
+    }
+
     onSubmit() {
         if (this.bookingForm.valid) {
-            console.log('Booking Form Data:', this.bookingForm.value);
-            this.snackBar.open('Your booking request has been submitted!', 'Close', {
-                duration: 3000,
-                horizontalPosition: 'center',
-                verticalPosition: 'top'
-            });
-            this.router.navigate(['/user/booking-confirmation']);
+            const formValue = this.bookingForm.value;
+            
+            if (!this.selectedRoom) {
+                this.snackBar.open('Error: Room not found', 'Close', { duration: 3000 });
+                return;
+            }
+
+            const booking: BookingDTO = {
+                userId: this.userId,
+                bedId: formValue.bed,
+                checkInDate: formValue.arrivalDate,
+                checkOutDate: formValue.departureDate,
+                totalPrice: this.calculateTotalAmount(),
+                status: 'PENDING'
+            };
+
+            this.loading = true;
+            this.bookingService.createBooking(booking).subscribe(
+                (response) => {
+                    this.snackBar.open('Booking created successfully!', 'Close', {
+                        duration: 3000
+                    });
+                    this.router.navigate(['/user/booking-confirmation'], {
+                        state: { booking: response }
+                    });
+                },
+                (error) => {
+                    console.error('Error creating booking:', error);
+                    this.snackBar.open('Error creating booking. Please try again.', 'Close', {
+                        duration: 3000
+                    });
+                    this.loading = false;
+                }
+            );
         } else {
             this.snackBar.open('Please fill in all required fields correctly.', 'Close', {
-                duration: 3000,
-                horizontalPosition: 'center',
-                verticalPosition: 'top'
+                duration: 3000
             });
         }
     }

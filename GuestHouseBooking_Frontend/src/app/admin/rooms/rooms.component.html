@@ -1,56 +1,93 @@
 <div class="rooms-container">
-  <h2>Room Configuration</h2>
+  <h2>Room Management</h2>
 
-  <form [formGroup]="roomConfigForm" (ngSubmit)="onAddRooms()">
+  <form [formGroup]="roomForm" (ngSubmit)="onAddRoom()">
     <mat-card class="room-config-card">
       <mat-card-content>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Select Guest House</mat-label>
-          <mat-select formControlName="hotelId" required>
-            <mat-option>-- None --</mat-option>
-            <mat-option *ngFor="let hotel of hotels" [value]="hotel.id">
-              {{ hotel.name }} ({{ hotel.address }})
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="roomConfigForm.get('hotelId')?.hasError('required') && roomConfigForm.get('hotelId')?.touched">
-            Guest House selection is required.
-          </mat-error>
-        </mat-form-field>
-
-        <div class="room-type-inputs">
-          <mat-form-field appearance="outline">
-            <mat-label>Number of Single Bed Rooms</mat-label>
-            <input matInput type="number" formControlName="singleBedRoomsToAdd" min="0" required>
-            <mat-error *ngIf="roomConfigForm.get('singleBedRoomsToAdd')?.hasError('required') && roomConfigForm.get('singleBedRoomsToAdd')?.touched">
-              Count is required.
-            </mat-error>
-            <mat-error *ngIf="roomConfigForm.get('singleBedRoomsToAdd')?.hasError('min')">
-              Must be non-negative.
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Number of Double Bed Rooms</mat-label>
-            <input matInput type="number" formControlName="doubleBedRoomsToAdd" min="0" required>
-            <mat-error *ngIf="roomConfigForm.get('doubleBedRoomsToAdd')?.hasError('required') && roomConfigForm.get('doubleBedRoomsToAdd')?.touched">
-              Count is required.
-            </mat-error>
-            <mat-error *ngIf="roomConfigForm.get('doubleBedRoomsToAdd')?.hasError('min')">
-              Must be non-negative.
-            </mat-error>
-          </mat-form-field>
+        <div *ngIf="isLoading" class="loading-overlay">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading...</p>
         </div>
 
-        <mat-error *ngIf="roomConfigForm.hasError('noRoomsAdded') && roomConfigForm.touched" class="form-level-error">
-          Please add at least one single bed or double bed room.
-        </mat-error>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Guest House</mat-label>
+          <mat-select formControlName="guestHouseId" required [disabled]="isLoading">
+            <mat-option>-- None --</mat-option>
+            <mat-option *ngFor="let guestHouse of guestHouses" [value]="guestHouse.id">
+              {{ guestHouse.name }} ({{ guestHouse.address }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="roomForm.get('guestHouseId')?.hasError('required') && roomForm.get('guestHouseId')?.touched">
+            Guest House selection is required
+          </mat-error>
+          <mat-hint *ngIf="isLoading">Loading guest houses...</mat-hint>
+        </mat-form-field>
 
+        <div class="room-details">
+          <mat-form-field appearance="outline">
+            <mat-label>Room Number</mat-label>
+            <input matInput formControlName="roomNumber" required placeholder="e.g., 101">
+            <mat-error *ngIf="roomForm.get('roomNumber')?.hasError('required')">
+              Room number is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Room Description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+            <mat-hint>Describe the room features and amenities</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Amenities</mat-label>
+            <textarea matInput formControlName="amenities" rows="2"></textarea>
+            <mat-hint>List the amenities available in this room</mat-hint>
+          </mat-form-field>
+        </div>
       </mat-card-content>
+
       <mat-card-actions align="end">
-        <button mat-raised-button color="primary" type="submit" [disabled]="roomConfigForm.invalid">
-          Add Rooms
+        <button mat-raised-button color="primary" type="submit" [disabled]="roomForm.invalid || isLoading">
+          <mat-icon>add</mat-icon>
+          Add Room
         </button>
       </mat-card-actions>
     </mat-card>
   </form>
+
+  <!-- Display existing rooms -->
+  <mat-card class="existing-rooms-card" *ngIf="roomForm.get('guestHouseId')?.value">
+    <mat-card-title>Existing Rooms</mat-card-title>
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading rooms...</p>
+      </div>
+      
+      <div *ngIf="!isLoading && rooms.length === 0" class="no-rooms-message">
+        <p>No rooms found for this guest house. Add a room using the form above.</p>
+      </div>
+
+      <mat-list *ngIf="!isLoading && rooms.length > 0">
+        <mat-list-item *ngFor="let room of rooms">
+          <div class="room-list-item">
+            <div class="room-info">
+              <h3>Room {{ room.roomNumber }}</h3>
+              <p class="room-description" *ngIf="room.description">{{ room.description }}</p>
+              <p class="room-amenities" *ngIf="room.amenities">Amenities: {{ room.amenities }}</p>
+            </div>
+            <div class="room-actions">
+              <button mat-icon-button color="primary" (click)="configureBeds(room.id!)" matTooltip="Configure Beds">
+                <mat-icon>hotel</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteRoom(room.id!)" matTooltip="Delete Room">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
 </div>

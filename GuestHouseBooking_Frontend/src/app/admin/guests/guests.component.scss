@@ -19,17 +19,27 @@
   flex: 0 0 80px; /* Adjust width for action buttons */
 }
 
-.status-pending {
+.status-PENDING {
   color: orange;
   font-weight: bold;
 }
 
-.status-approved {
+.status-CONFIRMED {
   color: green;
   font-weight: bold;
 }
 
-.status-rejected {
+.status-DENIED {
   color: red;
+  font-weight: bold;
+}
+
+.status-CANCELED {
+  color: #666;
+  font-weight: bold;
+}
+
+.status-COMPLETED {
+  color: blue;
   font-weight: bold;
 }

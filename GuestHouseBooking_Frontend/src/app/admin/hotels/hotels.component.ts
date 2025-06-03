@@ -1,26 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog'; // Assuming Angular Material for dialogs
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { AddEditHotelDialogComponent } from './add-edit-hotel-dialog/add-edit-hotel-dialog.component';
-import { ConfirmDialogData, ConfirmDialogComponent } from 'src/app/shared/confirm-dialog/confirm-dialog.component';
-
-// Define a simple interface for a Hotel (you can expand this)
-export interface Hotel {
-  id: number;
-  name: string;
-  address: string;
-  description: string;
-  rating: number;
-  imageUrl?: string;
-  
-  // Add other properties like images, rooms, etc.
-}
-
-// Define a structure for the room configuration submission
-export interface RoomConfigSubmission {
-  hotelId: number | null;
-  singleBedRoomsToAdd: number;
-  doubleBedRoomsToAdd: number;
-}
+import { GuestHouseService, GuestHouseDTO } from '../../services/guesthouse/guest-house.service';
 
 @Component({
   selector: 'app-hotels',
@@ -28,93 +10,85 @@ export interface RoomConfigSubmission {
   styleUrls: ['./hotels.component.scss']
 })
 export class HotelsComponent implements OnInit {
-  hotels: Hotel[] = []; // Array to hold our hotel data
+  guestHouses: GuestHouseDTO[] = [];
+  loading = false;
+  error: string | null = null;
 
-  constructor(private dialog: MatDialog) { } // Inject MatDialog service
+  constructor(
+    private dialog: MatDialog,
+    private guestHouseService: GuestHouseService,
+    private snackBar: MatSnackBar
+  ) { }
 
   ngOnInit(): void {
-    // In a real application, you would fetch hotels from a service here
-    this.loadHotels();
+    this.loadGuestHouses();
   }
 
-  loadHotels(): void {
-    // Simulate fetching data from a backend
-    // In a real app: this.hotelService.getHotels().subscribe(data => this.hotels = data);
-    this.hotels = [
-      {
-        id: 1, name: 'Grand Hyatt', address: 'New York', description: 'Luxury hotel in the heart of the city.',
-        rating: 3.5
+  loadGuestHouses(): void {
+    this.loading = true;
+    this.error = null;
+    this.guestHouseService.getAllGuestHouses().subscribe({
+      next: (guestHouses) => {
+        this.guestHouses = guestHouses;
+        this.loading = false;
       },
-      {
-        id: 2, name: 'Beachfront Resort', address: 'Maldives', description: 'Stunning resort with ocean views.',
-        rating: 4.5
-      },
-      {
-        id: 3, name: 'Mountain Retreat', address: 'Swiss Alps', description: 'Cozy retreat for nature lovers.',
-        rating: 4.7
+      error: (error) => {
+        console.error('Error loading guest houses:', error);
+        this.error = 'Failed to load guest houses. Please try again.';
+        this.loading = false;
       }
-    ];
-    console.log('Hotels loaded:', this.hotels);
+    });
   }
 
-  /**
-   * Opens the add/edit hotel dialog.
-   * @param hotel The hotel object to edit, or undefined for adding a new hotel.
-   */
-  openAddEditDialog(hotel?: Hotel): void {
+  openAddEditDialog(guestHouse?: GuestHouseDTO): void {
     const dialogRef = this.dialog.open(AddEditHotelDialogComponent, {
-      width: '600px', // Set a suitable width for your dialog
-      data: hotel // Pass the hotel object if editing, or undefined if adding
+      width: '600px',
+      data: guestHouse || null
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed', result);
       if (result) {
-        // If result exists, it means the dialog returned data (e.g., a new/updated hotel)
-        if (hotel && hotel.id) {
-          // If a hotel was passed, it's an edit operation
-          // In a real app: this.hotelService.updateHotel(result).subscribe(() => this.loadHotels());
-          const index = this.hotels.findIndex(h => h.id === result.id);
-          if (index > -1) {
-            this.hotels[index] = result; // Update the existing hotel in our local array
-          }
+        if (result.id) {
+          // Update existing guest house
+          this.guestHouseService.updateGuestHouse(result.id, result).subscribe({
+            next: () => {
+              this.snackBar.open('Guest house updated successfully', 'Close', { duration: 3000 });
+              this.loadGuestHouses();
+            },
+            error: (error) => {
+              console.error('Error updating guest house:', error);
+              this.snackBar.open('Error updating guest house', 'Close', { duration: 3000 });
+            }
+          });
         } else {
-          // It's an add operation
-          // In a real app: this.hotelService.addHotel(result).subscribe(() => this.loadHotels());
-          // Assign a temporary ID for demonstration if adding
-          result.id = this.hotels.length ? Math.max(...this.hotels.map(h => h.id)) + 1 : 1;
-          this.hotels.push(result); // Add the new hotel to our local array
+          // Create new guest house
+          this.guestHouseService.createGuestHouse(result).subscribe({
+            next: () => {
+              this.snackBar.open('Guest house created successfully', 'Close', { duration: 3000 });
+              this.loadGuestHouses();
+            },
+            error: (error) => {
+              console.error('Error creating guest house:', error);
+              this.snackBar.open('Error creating guest house', 'Close', { duration: 3000 });
+            }
+          });
         }
-        this.loadHotels(); // Re-load or refresh the list (or update locally more efficiently)
       }
     });
   }
 
-  /**
-   * Handles the deletion of a hotel.
-   * @param hotelId The ID of the hotel to delete.
-   */
-   deleteHotel(hotelId: number, hotelName: string): void {
-    const dialogData: ConfirmDialogData = {
-      title: 'Confirm Deletion',
-      message: `Are you sure you want to delete "${hotelName}"? This action cannot be undone.`,
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel'
-    };
-
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '400px', // Set a suitable width
-      data: dialogData
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === true) { // User confirmed deletion
-        // In a real app: this.hotelService.deleteHotel(hotelId).subscribe(() => this.loadHotels());
-        this.hotels = this.hotels.filter(hotel => hotel.id !== hotelId);
-        console.log(`Hotel with ID ${hotelId} (${hotelName}) deleted.`);
-      } else {
-        console.log('Hotel deletion cancelled.');
-      }
-    });
+  deleteGuestHouse(id: number, name: string): void {
+    if (confirm(`Are you sure you want to delete guest house "${name}"?`)) {
+      this.guestHouseService.deleteGuestHouse(id).subscribe({
+        next: () => {
+          this.snackBar.open('Guest house deleted successfully', 'Close', { duration: 3000 });
+          this.loadGuestHouses();
+        },
+        error: (error) => {
+          console.error('Error deleting guest house:', error);
+          this.snackBar.open('Error deleting guest house', 'Close', { duration: 3000 });
+        }
+      });
+    }
   }
 }

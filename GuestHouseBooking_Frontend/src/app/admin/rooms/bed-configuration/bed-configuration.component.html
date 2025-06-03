@@ -1,0 +1,67 @@
+<div class="bed-config-container">
+  <h2>Bed Configuration</h2>
+
+  <form [formGroup]="bedForm" (ngSubmit)="onAddBed()">
+    <mat-card class="bed-config-card">
+      <mat-card-content>
+        <div *ngIf="isLoading" class="loading-overlay">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading...</p>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select Room</mat-label>
+          <mat-select formControlName="roomId" required>
+            <mat-option>-- None --</mat-option>
+            <mat-option *ngFor="let room of rooms" [value]="room.id">
+              Room {{ room.roomNumber }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="bedForm.get('roomId')?.hasError('required') && bedForm.get('roomId')?.touched">
+            Room selection is required
+          </mat-error>
+        </mat-form-field>
+
+        <div *ngIf="selectedRoomId" class="bed-info">
+          <p>Current number of beds: {{ bedCount }}</p>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Bed Number</mat-label>
+          <input matInput formControlName="bedNumber" required placeholder="e.g., B1">
+          <mat-error *ngIf="bedForm.get('bedNumber')?.hasError('required') && bedForm.get('bedNumber')?.touched">
+            Bed number is required
+          </mat-error>
+        </mat-form-field>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" type="submit" [disabled]="bedForm.invalid || isLoading">
+          <mat-icon>add</mat-icon>
+          Add Bed
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+
+  <!-- Display existing beds -->
+  <mat-card class="existing-beds-card" *ngIf="beds.length > 0">
+    <mat-card-title>Existing Beds</mat-card-title>
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let bed of beds">
+          <div class="bed-list-item">
+            <div class="bed-info">
+              <h3>Bed {{ bed.bedNumber }}</h3>
+              <p>Status: {{ bed.isAvailable ? 'Available' : 'Occupied' }}</p>
+            </div>
+            <button mat-icon-button color="warn" (click)="deleteBed(bed.id)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <mat-divider></mat-divider>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div> 

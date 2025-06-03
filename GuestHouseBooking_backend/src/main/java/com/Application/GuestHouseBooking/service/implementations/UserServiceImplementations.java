@@ -1,16 +1,17 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.Application.GuestHouseBooking.dtos.UserDTO;
 import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 import com.Application.GuestHouseBooking.service.UserServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImplementations implements UserServices {
@@ -52,6 +53,7 @@ public class UserServiceImplementations implements UserServices {
 
     // --- CRUD Operations ---
 
+    @Override
     public UserDTO createUser(UserDTO userDTO) {
         // Basic validation for uniqueness (more robust validation can be added)
         if (userRepository.existsByUsername(userDTO.getUsername())) {
