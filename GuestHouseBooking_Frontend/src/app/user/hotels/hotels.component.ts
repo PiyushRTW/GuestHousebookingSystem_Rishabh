@@ -4,6 +4,7 @@ import { RoomService } from 'src/app/services/rooms/room.service';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-hotels',
@@ -18,10 +19,15 @@ export class HotelsComponent implements OnInit {
   constructor(
     private guestHouseService: GuestHouseService,
     private roomService: RoomService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return;
+    }
     this.loadGuestHouses();
   }
 
@@ -29,33 +35,49 @@ export class HotelsComponent implements OnInit {
     this.loading = true;
     this.error = null;
     
+    console.log('Loading guest houses... Auth token:', this.authService.getToken());
+    
     this.guestHouseService.getAllGuestHouses()
       .subscribe({
         next: (guestHouses) => {
+          console.log('Received guest houses:', guestHouses);
+          
           // Create an array of room count observables for each guest house
           const roomCountObservables = guestHouses.map(guestHouse => 
             this.roomService.getRoomsByGuestHouse(guestHouse.id!).pipe(
-              map(rooms => ({ ...guestHouse, totalRooms: rooms.length })),
-              catchError(() => of({ ...guestHouse, totalRooms: 0 }))
+              map(rooms => {
+                console.log(`Rooms for guest house ${guestHouse.id}:`, rooms);
+                return { ...guestHouse, totalRooms: rooms.length };
+              }),
+              catchError(error => {
+                console.error(`Error fetching rooms for guest house ${guestHouse.id}:`, error);
+                return of({ ...guestHouse, totalRooms: 0 });
+              })
             )
           );
 
           // Wait for all room count requests to complete
           forkJoin(roomCountObservables).subscribe({
             next: (guestHousesWithRooms) => {
+              console.log('Final guest houses with rooms:', guestHousesWithRooms);
               this.guestHouses = guestHousesWithRooms;
               this.loading = false;
             },
             error: (error) => {
               console.error('Error fetching room counts:', error);
-              this.error = 'Failed to load guest houses. Please try again later.';
+              this.error = 'Failed to load room information. Please try again later.';
               this.loading = false;
             }
           });
         },
         error: (error) => {
           console.error('Error fetching guest houses:', error);
-          this.error = 'Failed to load guest houses. Please try again later.';
+          if (error.status === 401 || error.status === 403) {
+            this.error = 'Authentication error. Please log in again.';
+            this.authService.logout();
+          } else {
+            this.error = 'Failed to load guest houses. Please try again later.';
+          }
           this.loading = false;
         }
       });

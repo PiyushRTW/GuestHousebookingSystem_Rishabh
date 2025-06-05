@@ -45,8 +45,7 @@ public class RoomController {
     public ResponseEntity<List<RoomDTO>> getRoomsByGuestHouseId(@PathVariable Long guestHouseId) {
         List<RoomDTO> rooms = roomService.getRoomsByGuestHouseId(guestHouseId);
         if (rooms.isEmpty()) {
-            // Consider if you want 404 for no rooms or just an empty list with 200
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If guesthouse doesn't exist or no rooms
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(rooms, HttpStatus.OK);
     }
@@ -59,7 +58,7 @@ public class RoomController {
                     .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (RuntimeException e) {
             System.err.println("Error updating room: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // GuestHouse not found or invalid data
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 

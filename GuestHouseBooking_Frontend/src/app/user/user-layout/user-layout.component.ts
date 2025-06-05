@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-user-layout',
@@ -8,16 +9,22 @@ import { Router } from '@angular/router';
 })
 export class UserLayoutComponent {
   isSidebarOpen = true;
-  username = 'John Doe'; // This will be replaced with actual user data later
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  get username(): string {
+    const user = this.authService.currentUserValue;
+    return user ? `${user.firstName} ${user.lastName}` : 'Guest';
+  }
 
   toggleSidebar() {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
   logout() {
-    // Here you'll add actual logout logic with JWT later
-    this.router.navigate(['/login']);
+    this.authService.logout();
   }
 }

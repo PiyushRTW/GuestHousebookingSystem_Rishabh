@@ -1,38 +1,66 @@
 <div class="login-container">
   <div class="image-side">
     <div class="image-placeholder">
-      <span>Here will be an image</span>
+      <span>Welcome to Guest House Booking</span>
     </div>
   </div>
   <mat-card class="login-card">
     <mat-card-title class="login-title">Login</mat-card-title>
     <mat-card-content>
-      <form class="login-form">
-        <mat-form-field class="full-width">
+      <form class="login-form" (ngSubmit)="onLogin()" #loginForm="ngForm">
+        <mat-form-field class="full-width" appearance="outline">
           <mat-label>Username</mat-label>
-          <input matInput placeholder="Enter your username" [(ngModel)]="username" name="username" required>
+          <input matInput 
+                 placeholder="Enter your username" 
+                 [(ngModel)]="username" 
+                 name="username" 
+                 required
+                 #usernameInput="ngModel">
+          <mat-error *ngIf="usernameInput.invalid && usernameInput.touched">
+            Username is required
+          </mat-error>
         </mat-form-field>
-        <mat-form-field class="full-width">
+
+        <mat-form-field class="full-width" appearance="outline">
           <mat-label>Password</mat-label>
-          <input matInput type="password" placeholder="Enter your password" [(ngModel)]="password" name="password" required>
+          <input matInput 
+                 [type]="hidePassword ? 'password' : 'text'"
+                 placeholder="Enter your password" 
+                 [(ngModel)]="password" 
+                 name="password" 
+                 required
+                 #passwordInput="ngModel">
+          <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="passwordInput.invalid && passwordInput.touched">
+            Password is required
+          </mat-error>
         </mat-form-field>
-        <mat-radio-group aria-label="Select an option" [(ngModel)]="loginType" name="loginType">
-          <mat-radio-button value="user" class="login-option">User</mat-radio-button>
-          <mat-radio-button value="admin" class="login-option">Admin</mat-radio-button>
-        </mat-radio-group>
-        <mat-checkbox class="remember-me">Remember Me</mat-checkbox>
+
+        <div class="form-actions">
+          <button mat-raised-button 
+                  color="primary" 
+                  type="submit" 
+                  [disabled]="loginForm.invalid || isLoading"
+                  class="login-button">
+            <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+            <span *ngIf="!isLoading">Login</span>
+          </button>
+          
+          <button mat-stroked-button 
+                  type="button" 
+                  (click)="onRegister()" 
+                  [disabled]="isLoading"
+                  class="register-button">
+            Register
+          </button>
+        </div>
       </form>
     </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button color="primary" (click)="onLogin()">Login</button>
-    </mat-card-actions>
+
     <div class="forgot-password">
-      <a href="#">Forgot Password?</a>
-    </div>
-    <mat-divider class="divider"></mat-divider>
-    <div class="register-section">
-      <p>New to Guest House Booking?</p>
-      <button mat-raised-button color="accent" (click)="onRegister()">Register Now</button>
+      <a mat-button color="primary" routerLink="/forgot-password">Forgot Password?</a>
     </div>
   </mat-card>
 </div>

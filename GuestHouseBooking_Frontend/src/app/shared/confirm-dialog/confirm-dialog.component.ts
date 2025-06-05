@@ -1,26 +1,41 @@
 import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 export interface ConfirmDialogData {
   title: string;
   message: string;
-  confirmButtonText: string;
-  cancelButtonText: string;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 @Component({
   selector: 'app-confirm-dialog',
   template: `
-    <h1 mat-dialog-title>{{ data.title }}</h1>
-    <div mat-dialog-content>
+    <h2 mat-dialog-title>{{ data.title }}</h2>
+    <mat-dialog-content>
       <p>{{ data.message }}</p>
-    </div>
-    <div mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">{{ data.cancelButtonText }}</button>
-      <button mat-raised-button color="warn" (click)="onConfirm()">{{ data.confirmButtonText }}</button>
-    </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="onCancel()">
+        {{ data.cancelText || 'Cancel' }}
+      </button>
+      <button mat-raised-button color="warn" (click)="onConfirm()">
+        {{ data.confirmText || 'Confirm' }}
+      </button>
+    </mat-dialog-actions>
   `,
-  styles: [] // You can add styles here if needed
+  styles: [`
+    :host {
+      display: block;
+      padding: 16px;
+    }
+    mat-dialog-content {
+      margin: 16px 0;
+    }
+    mat-dialog-actions {
+      margin-bottom: 0;
+    }
+  `]
 })
 export class ConfirmDialogComponent {
   constructor(
@@ -29,10 +44,10 @@ export class ConfirmDialogComponent {
   ) {}
 
   onConfirm(): void {
-    this.dialogRef.close(true); // Close with 'true' if confirmed
+    this.dialogRef.close(true);
   }
 
   onCancel(): void {
-    this.dialogRef.close(false); // Close with 'false' if cancelled
+    this.dialogRef.close(false);
   }
 }

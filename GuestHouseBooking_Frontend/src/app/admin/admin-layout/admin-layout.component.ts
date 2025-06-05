@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -12,7 +13,7 @@ import { Router } from '@angular/router';
 })
 export class AdminLayoutComponent {
     @ViewChild('drawer')
-  drawer!: MatSidenav; // 'drawer' matches the #drawer in the template
+  drawer!: MatSidenav;
 
   isScreenSmall: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Small)
     .pipe(
@@ -21,10 +22,18 @@ export class AdminLayoutComponent {
     );
 
   isSidebarOpen = true;
-  adminName = 'Admin User'; // This will be replaced with actual admin data later
 
-  constructor(private breakpointObserver: BreakpointObserver, private router: Router) {}
-  // You could also move the toggle logic to the component class if needed
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  get adminName(): string {
+    const user = this.authService.currentUserValue;
+    return user ? `${user.firstName} ${user.lastName}` : 'Admin';
+  }
+
   toggleDrawer() {
     this.drawer.toggle();
   }
@@ -34,7 +43,6 @@ export class AdminLayoutComponent {
   }
 
   logout() {
-    // Here you'll add actual logout logic with JWT later
-    this.router.navigate(['/login']);
+    this.authService.logout();
   }
 }

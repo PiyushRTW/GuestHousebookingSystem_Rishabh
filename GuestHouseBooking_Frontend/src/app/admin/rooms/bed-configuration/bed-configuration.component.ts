@@ -30,7 +30,8 @@ export class BedConfigurationComponent implements OnInit {
   initForm(): void {
     this.bedForm = this.fb.group({
       roomId: [null, Validators.required],
-      bedNumber: ['', Validators.required]
+      bedNumber: ['', Validators.required],
+      pricePerNight: [0, [Validators.required, Validators.min(0)]]
     });
 
     // Load beds when room is selected
@@ -79,7 +80,8 @@ export class BedConfigurationComponent implements OnInit {
       const bedData = {
         roomId: this.bedForm.get('roomId')?.value,
         bedNumber: this.bedForm.get('bedNumber')?.value,
-        isAvailable: true
+        isAvailable: true,
+        pricePerNight: this.bedForm.get('pricePerNight')?.value
       };
 
       this.roomService.createBed(bedData).subscribe({

@@ -29,7 +29,6 @@ public class BookingServiceImplementations implements BookingServices {
     @Autowired
     private UserRepository userRepository;
 
-    // *** MODIFICATION HERE: Use BedRepository instead of RoomRepository for direct booking link ***
     @Autowired
     private BedRepository bedRepository;
 

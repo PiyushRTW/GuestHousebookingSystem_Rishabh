@@ -1,5 +1,6 @@
 package com.Application.GuestHouseBooking.dtos;
 
+import com.Application.GuestHouseBooking.entity.User;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -8,11 +9,12 @@ import java.time.LocalDateTime;
 public class UserDTO {
     private Long id;
     private String username;
-    private String password; // For creation/update, but be careful with exposing on GET
+    private String password;
     private String email;
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    private User.UserRole role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

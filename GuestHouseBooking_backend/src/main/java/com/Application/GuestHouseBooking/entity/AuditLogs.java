@@ -1,18 +1,27 @@
 package com.Application.GuestHouseBooking.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "audit_log")
 @Data
 @NoArgsConstructor // Lombok annotation for no-args constructor
 @AllArgsConstructor // Lombok annotation for all-args constructor
+@EntityListeners(AuditingEntityListener.class) // Enable JPA auditing for this entity
 public class AuditLogs {
 
     @Id
@@ -33,7 +42,7 @@ public class AuditLogs {
 
     @CreationTimestamp // Automatically sets the timestamp on creation
     @Column(nullable = false, updatable = false)
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")
     private String oldValue; // JSON representation of the entity before change (for UPDATE/DELETE)

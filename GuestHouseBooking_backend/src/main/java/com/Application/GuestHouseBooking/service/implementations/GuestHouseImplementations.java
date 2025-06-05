@@ -160,7 +160,7 @@ public class GuestHouseImplementations implements GuestHouseServices {
                     "GuestHouse",
                     id,
                     "DELETE",
-                    "system_user", // Fallback, ideally get from security context during delete operation
+                    "system_user", 
                     oldValue,
                     null, // No new value for delete
                     "GuestHouse deleted"

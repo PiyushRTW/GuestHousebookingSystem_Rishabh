@@ -38,4 +38,4 @@ export class UserService {
   updateUserProfile(id: number, user: UserDTO): Observable<UserDTO> {
     return this.http.put<UserDTO>(`${this.apiUrl}/${id}`, user);
   }
-} 
+}

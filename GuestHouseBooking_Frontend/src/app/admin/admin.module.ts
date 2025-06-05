@@ -35,6 +35,7 @@ import { BookingDetailDialogComponent } from './booking-detail-dialog.component'
 import { ReservationsListComponent } from './reservations-list/reservations-list.component';
 import { BedConfigurationComponent } from './rooms/bed-configuration/bed-configuration.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -74,7 +75,8 @@ import { MatDividerModule } from '@angular/material/divider';
     MatPaginatorModule, // Add this
     MatSortModule,
     MatSnackBarModule,
-    MatDividerModule
+    MatDividerModule,
+    SharedModule
   ]
 })
 export class AdminModule { }

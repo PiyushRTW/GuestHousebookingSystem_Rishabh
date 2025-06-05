@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 public class BookingDTO {
     private Long id;
     private Long userId;
-    // *** MODIFICATION HERE: Link to Bed ID ***
-    private Long bedId; // ID of the specific bed being booked
+    private Long bedId;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private Booking.BookingStatus status;

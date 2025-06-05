@@ -1,17 +1,31 @@
 package com.Application.GuestHouseBooking.Config;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 
-@Component // Make it a Spring bean
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+@Component("auditorAwareImpl") // Named component for explicit reference
 public class AuditorAwareImpl implements AuditorAware<String> {
 
     @Override
     public Optional<String> getCurrentAuditor() {
-        // This is where you would normally get the current logged-in user from Spring Security context
-        // For now, let's return a static string.
-        // Later: return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication().getName());
-        return Optional.of("system_user"); // Placeholder for now
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.of("system_user"); // Default when no authenticated user
+        }
+        
+        Object principal = authentication.getPrincipal();
+        
+        if (principal instanceof UserDetails) {
+            return Optional.of(((UserDetails) principal).getUsername());
+        } else if (principal instanceof String) {
+            return Optional.of((String) principal);
+        }
+        
+        return Optional.of(principal.toString());
     }
 }

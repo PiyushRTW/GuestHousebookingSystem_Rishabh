@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class BedDTO {
     private Long id;
-    private Long roomId; // To link to the Room
+    private Long roomId;
     private String bedNumber;
     private Boolean isAvailable;
     private BigDecimal pricePerNight;

@@ -42,14 +42,12 @@ public class BedServicesImplementations implements BedServices {
         Bed bed = new Bed();
         bed.setId(bedDTO.getId());
 
-        // Fetch the associated Room
         Room room = roomRepository.findById(bedDTO.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found with ID: " + bedDTO.getRoomId()));
         bed.setRoom(room);
 
         return bed;
     }
-    // --- CRUD Operations ---
 
     public BedDTO createBed(BedDTO bedDTO) {
         Bed bed = convertToEntity(bedDTO);
@@ -61,18 +59,16 @@ public class BedServicesImplementations implements BedServices {
                     "Bed",
                     savedBed.getId(),
                     "CREATE",
-                    savedBed.getCreatedBy(), // Will be populated by Spring Data JPA Auditing
-                    null, // No old value for create
-                    objectMapper.writeValueAsString(savedBed), // New value as JSON
+                    savedBed.getCreatedBy(),
+                    null,
+                    objectMapper.writeValueAsString(savedBed),
                     "New Bed created for Room ID: " + savedBed.getRoom().getId()
             );
         } catch (Exception e) {
             System.err.println("Failed to log audit for Bed creation: " + e.getMessage());
         }
-        // --- End Audit Log ---
 
         return convertToDTO(savedBed);
-
     }
 
     public Optional<BedDTO> getBedById(Long id) {

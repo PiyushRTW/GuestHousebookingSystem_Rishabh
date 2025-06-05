@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.Application.GuestHouseBooking.dtos.UserDTO;
@@ -19,19 +20,21 @@ public class UserServiceImplementations implements UserServices {
     private UserRepository userRepository;
 
     @Autowired
-    private AuditLogServices auditLogService; // Inject AuditLogService
+    private AuditLogServices auditLogService;
 
     @Autowired
-    private ObjectMapper objectMapper; // Inject ObjectMapper for JSON conversion
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private UserDTO convertToDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
-        // For security, DO NOT include password when returning DTOs for GET requests
-        // dto.setPassword(user.getPassword());
         dto.setEmail(user.getEmail());
         dto.setFirstName(user.getFirstName());
+        dto.setRole(user.getRole());
         dto.setLastName(user.getLastName());
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setCreatedAt(user.getCreatedAt());
@@ -41,9 +44,9 @@ public class UserServiceImplementations implements UserServices {
 
     private User convertToEntity(UserDTO userDTO) {
         User user = new User();
-        user.setId(userDTO.getId()); // ID will be null for new users, set for updates
+        user.setId(userDTO.getId());
         user.setUsername(userDTO.getUsername());
-        user.setPassword(userDTO.getPassword()); // In a real app, encode password before saving!
+        user.setPassword(userDTO.getPassword());
         user.setEmail(userDTO.getEmail());
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
@@ -51,11 +54,9 @@ public class UserServiceImplementations implements UserServices {
         return user;
     }
 
-    // --- CRUD Operations ---
 
     @Override
     public UserDTO createUser(UserDTO userDTO) {
-        // Basic validation for uniqueness (more robust validation can be added)
         if (userRepository.existsByUsername(userDTO.getUsername())) {
             throw new RuntimeException("Username already exists: " + userDTO.getUsername());
         }
@@ -64,16 +65,20 @@ public class UserServiceImplementations implements UserServices {
         }
 
         User user = convertToEntity(userDTO);
+        if (user.getRole() == null) {
+            user.setRole(User.UserRole.USER);
+        }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
-        // --- Audit Log: CREATE for User ---
         try {
             auditLogService.logAudit(
                     "User",
                     savedUser.getId(),
                     "CREATE",
-                    savedUser.getCreatedBy(), // This will be populated by Spring Data JPA Auditing
-                    null, // No old value for create
-                    objectMapper.writeValueAsString(savedUser), // New value as JSON
+                    savedUser.getCreatedBy(),
+                    null,
+                    objectMapper.writeValueAsString(savedUser),
                     "New User registered"
             );
         } catch (Exception e) {
@@ -104,7 +109,7 @@ public class UserServiceImplementations implements UserServices {
             existingUser.setUsername(userDTO.getUsername());
             // Only update password if provided and not null, and ensure encoding
             if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-                existingUser.setPassword(userDTO.getPassword()); // Encode in real app
+                existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword())); // <<< Encode password on update!
             }
             existingUser.setEmail(userDTO.getEmail());
             existingUser.setFirstName(userDTO.getFirstName());

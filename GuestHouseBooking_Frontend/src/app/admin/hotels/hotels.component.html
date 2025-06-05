@@ -44,8 +44,12 @@
         <button mat-icon-button color="primary" (click)="openAddEditDialog(guestHouse)" matTooltip="Edit">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" (click)="deleteGuestHouse(guestHouse.id!, guestHouse.name)" matTooltip="Delete">
-          <mat-icon>delete</mat-icon>
+        <button mat-icon-button color="warn" 
+                (click)="deleteGuestHouse(guestHouse.id!, guestHouse.name)" 
+                matTooltip="Delete"
+                [disabled]="isDeleting(guestHouse.id!)">
+          <mat-icon *ngIf="!isDeleting(guestHouse.id!)">delete</mat-icon>
+          <mat-spinner diameter="20" *ngIf="isDeleting(guestHouse.id!)"></mat-spinner>
         </button>
       </mat-card-actions>
     </mat-card>

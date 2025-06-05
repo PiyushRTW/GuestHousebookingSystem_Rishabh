@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class RoomDTO {
     private Long id;
-    private Long guestHouseId; // To link to the GuestHouse
+    private Long guestHouseId;
     private String roomNumber;
     private String description;
     private String amenities;

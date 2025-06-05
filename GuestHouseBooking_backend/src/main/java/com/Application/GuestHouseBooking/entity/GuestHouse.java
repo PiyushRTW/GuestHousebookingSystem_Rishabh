@@ -9,6 +9,8 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -51,6 +53,12 @@ public class GuestHouse {
     private String email;
 
     private String imageUrl;
+
+    @OneToMany(mappedBy = "guestHouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    // 'mappedBy' indicates the field in the 'Room' entity that owns the relationship.
+    // 'cascade = CascadeType.ALL' means operations like persist, merge, remove will cascade to associated rooms.
+    // 'orphanRemoval = true' ensures that if a Room is removed from this collection, it's also deleted from the DB.
+    private Set<Room> rooms = new HashSet<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

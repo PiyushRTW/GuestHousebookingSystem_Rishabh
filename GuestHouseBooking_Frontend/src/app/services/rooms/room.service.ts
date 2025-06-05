@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth.service';
 
 // Room DTO matching backend entity
 export interface RoomDTO {
@@ -21,8 +22,7 @@ export interface Bed {
   roomId: number;
   bedNumber: string;
   isAvailable: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  pricePerNight: number;
 }
 
 @Injectable({
@@ -30,57 +30,70 @@ export interface Bed {
 })
 export class RoomService {
   private apiUrl = `${environment.apiUrl}/rooms`;
+  private bedApiUrl = `${environment.apiUrl}/beds`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
+
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  }
 
   // Room operations
   getAllRooms(): Observable<RoomDTO[]> {
-    return this.http.get<RoomDTO[]>(this.apiUrl);
+    return this.http.get<RoomDTO[]>(this.apiUrl, { headers: this.getHeaders() });
   }
 
   getRoomById(id: number): Observable<RoomDTO> {
-    return this.http.get<RoomDTO>(`${this.apiUrl}/${id}`);
+    return this.http.get<RoomDTO>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
   getRoomsByGuestHouse(guestHouseId: number): Observable<RoomDTO[]> {
-    return this.http.get<RoomDTO[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`);
+    console.log('Getting rooms for guest house:', guestHouseId);
+    return this.http.get<RoomDTO[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`, { headers: this.getHeaders() });
   }
 
   createRoom(room: RoomDTO): Observable<RoomDTO> {
-    return this.http.post<RoomDTO>(this.apiUrl, room);
+    return this.http.post<RoomDTO>(this.apiUrl, room, { headers: this.getHeaders() });
   }
 
   updateRoom(id: number, room: RoomDTO): Observable<RoomDTO> {
-    return this.http.put<RoomDTO>(`${this.apiUrl}/${id}`, room);
+    return this.http.put<RoomDTO>(`${this.apiUrl}/${id}`, room, { headers: this.getHeaders() });
   }
 
   deleteRoom(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
   // Bed operations
   getAllBeds(): Observable<Bed[]> {
-    return this.http.get<Bed[]>(`${environment.apiUrl}/beds`);
+    return this.http.get<Bed[]>(this.bedApiUrl, { headers: this.getHeaders() });
   }
 
   getBedById(id: number): Observable<Bed> {
-    return this.http.get<Bed>(`${environment.apiUrl}/beds/${id}`);
+    return this.http.get<Bed>(`${this.bedApiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
-  getBedsByRoom(roomId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/beds/by-room/${roomId}`);
+  getBedsByRoom(roomId: number): Observable<Bed[]> {
+    return this.http.get<Bed[]>(`${this.bedApiUrl}/by-room/${roomId}`, { headers: this.getHeaders() });
   }
 
   createBed(bed: Bed): Observable<Bed> {
-    return this.http.post<Bed>(`${environment.apiUrl}/beds`, bed);
+    return this.http.post<Bed>(this.bedApiUrl, bed, { headers: this.getHeaders() });
   }
 
   updateBed(id: number, bed: Bed): Observable<Bed> {
-    return this.http.put<Bed>(`${environment.apiUrl}/beds/${id}`, bed);
+    return this.http.put<Bed>(`${this.bedApiUrl}/${id}`, bed, { headers: this.getHeaders() });
   }
 
   deleteBed(id: number): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/beds/${id}`);
+    return this.http.delete<void>(`${this.bedApiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
   // Room statistics

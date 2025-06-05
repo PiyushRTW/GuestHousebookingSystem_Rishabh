@@ -36,6 +36,10 @@ public class User {
 
     private String phoneNumber;
 
+    @Enumerated(EnumType.STRING) // <<< IMPORTANT: Tells JPA to store enum as its String name
+    @Column(nullable = false)
+    private UserRole role;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -52,4 +56,9 @@ public class User {
     @Column(nullable = false) // user who last modified can change
     private String lastModifiedBy;
     // --- END AUDITING FIELDS ---
+
+    public enum UserRole {
+        USER,      // Standard user role
+        ADMIN,     // Administrator role
+    }
 }
