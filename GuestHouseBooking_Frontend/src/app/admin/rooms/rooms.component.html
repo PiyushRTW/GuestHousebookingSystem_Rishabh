@@ -57,7 +57,10 @@
 
   <!-- Display existing rooms -->
   <mat-card class="existing-rooms-card" *ngIf="roomForm.get('guestHouseId')?.value">
-    <mat-card-title>Existing Rooms</mat-card-title>
+    <mat-card-header>
+      <mat-card-title>Existing Rooms</mat-card-title>
+    </mat-card-header>
+    
     <mat-card-content>
       <div *ngIf="isLoading" class="loading-overlay">
         <mat-spinner diameter="40"></mat-spinner>
@@ -65,19 +68,23 @@
       </div>
       
       <div *ngIf="!isLoading && rooms.length === 0" class="no-rooms-message">
-        <p>No rooms found for this guest house. Add a room using the form above.</p>
+        <mat-icon>hotel</mat-icon>
+        <p>No rooms found for this guest house.</p>
+        <p>Add a room using the form above.</p>
       </div>
 
       <mat-list *ngIf="!isLoading && rooms.length > 0">
-        <mat-list-item *ngFor="let room of rooms">
-          <div class="room-list-item">
+        <mat-list-item *ngFor="let room of rooms" class="room-list-item">
+          <div class="room-content">
             <div class="room-info">
               <h3>Room {{ room.roomNumber }}</h3>
               <p class="room-description" *ngIf="room.description">{{ room.description }}</p>
-              <p class="room-amenities" *ngIf="room.amenities">Amenities: {{ room.amenities }}</p>
+              <p class="room-amenities" *ngIf="room.amenities">
+                <strong>Amenities:</strong> {{ room.amenities }}
+              </p>
             </div>
             <div class="room-actions">
-              <button mat-icon-button color="primary" (click)="configureBeds(room.id!)" matTooltip="Configure Beds">
+              <button mat-icon-button color="primary" (click)="configureBeds(room)" matTooltip="Configure Beds">
                 <mat-icon>hotel</mat-icon>
               </button>
               <button mat-icon-button color="warn" (click)="deleteRoom(room.id!)" matTooltip="Delete Room">

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
-import { map, catchError, switchMap, tap } from 'rxjs/operators';
+import { map, catchError, tap, finalize } from 'rxjs/operators';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 interface LoginResponse {
   token: string;
   username: string;
+  email: string;
   role: string;
   id: number;
 }
@@ -29,6 +30,7 @@ export class AuthService {
   private readonly USER_KEY = 'user';
   private refreshTokenInProgress = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  redirectUrl: string | null = null;
 
   constructor(
     private http: HttpClient,
@@ -38,13 +40,28 @@ export class AuthService {
     this.currentUser = this.currentUserSubject.asObservable();
   }
 
-  login(username: string, password: string): Observable<any> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { username, password })
+  login(email: string, password: string): Observable<any> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap(response => {
           if (response && response.token) {
             this.storeTokenAndUser(response);
           }
+        }),
+        map(response => {
+          // After successful login, check if there's a redirect URL
+          if (this.redirectUrl) {
+            this.router.navigate([this.redirectUrl]);
+            this.redirectUrl = null;
+          } else {
+            // Default navigation based on role
+            if (response.role === 'ADMIN') {
+              this.router.navigate(['/admin/dashboard']);
+            } else {
+              this.router.navigate(['/user/dashboard']);
+            }
+          }
+          return response;
         }),
         catchError(this.handleError)
       );
@@ -56,13 +73,21 @@ export class AuthService {
     }
 
     this.refreshTokenInProgress = true;
+    const currentToken = this.getToken();
+
+    if (!currentToken) {
+      this.refreshTokenInProgress = false;
+      return throwError(() => new Error('No token available for refresh'));
+    }
 
     return this.http.post<TokenResponse>(`${this.apiUrl}/refresh`, {}, {
-      headers: { 'Authorization': `Bearer ${this.getToken()}` }
+      headers: { 'Authorization': `Bearer ${currentToken}` }
     }).pipe(
       tap(response => {
-        this.storeToken(response.token);
-        this.refreshTokenSubject.next(response.token);
+        if (response && response.token) {
+          this.storeToken(response.token);
+          this.refreshTokenSubject.next(response.token);
+        }
       }),
       map(response => response.token),
       catchError(error => {
@@ -72,7 +97,7 @@ export class AuthService {
         }
         return throwError(() => error);
       }),
-      tap(() => {
+      finalize(() => {
         this.refreshTokenInProgress = false;
       })
     );
@@ -83,6 +108,7 @@ export class AuthService {
     const user = {
       id: response.id,
       username: response.username,
+      email: response.email,
       role: response.role
     };
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
@@ -93,14 +119,25 @@ export class AuthService {
     localStorage.setItem(this.TOKEN_KEY, token);
   }
 
-  isTokenExpired(): boolean {
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  private getUserFromStorage(): any {
+    const userStr = localStorage.getItem(this.USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  isAuthenticated(): boolean {
     const token = this.getToken();
-    if (!token) return true;
+    if (!token) {
+      return false;
+    }
     try {
-      return this.jwtHelper.isTokenExpired(token);
+      return !this.jwtHelper.isTokenExpired(token);
     } catch (error) {
       console.error('Error checking token expiration:', error);
-      return true;
+      return false;
     }
   }
 
@@ -113,48 +150,46 @@ export class AuthService {
         catchError(error => {
           console.error('Logout error:', error);
           return of(null);
+        }),
+        finalize(() => {
+          this.clearAuthData();
+          this.router.navigate(['/login']);
         })
-      ).subscribe(() => {
-        this.handleLogout();
-      });
+      ).subscribe();
     } else {
-      this.handleLogout();
+      this.clearAuthData();
+      this.router.navigate(['/login']);
     }
   }
 
-  private handleLogout(): void {
+  private clearAuthData(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
     this.refreshTokenSubject.next(null);
-    this.router.navigate(['/login']);
   }
 
   private handleError(error: HttpErrorResponse) {
     console.error('API Error:', error);
+    let errorMessage = 'An error occurred during authentication.';
+    
     if (error.status === 401) {
-      return throwError(() => new Error('Invalid username or password'));
+      errorMessage = 'Invalid email or password';
+    } else if (error.error?.message) {
+      errorMessage = error.error.message;
     }
-    return throwError(() => error);
+    
+    return throwError(() => new Error(errorMessage));
   }
 
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  isAuthenticated(): boolean {
+  isTokenExpired(): boolean {
     const token = this.getToken();
-    return token !== null && !this.isTokenExpired();
+    return !token || this.jwtHelper.isTokenExpired(token);
   }
 
   get userRole(): string | null {
     const user = this.getUserFromStorage();
     return user ? user.role : null;
-  }
-
-  private getUserFromStorage(): any {
-    const userStr = localStorage.getItem(this.USER_KEY);
-    return userStr ? JSON.parse(userStr) : null;
   }
 
   public get currentUserValue() {

@@ -3,11 +3,15 @@ package com.Application.GuestHouseBooking.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,6 +30,7 @@ import com.Application.GuestHouseBooking.repository.UserRepository;
 @RestController
 @RequestMapping("/api/auth") // Base path for authentication-related endpoints
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -44,91 +49,114 @@ public class AuthController {
      * Accessible at /api/auth/login
      */
     @PostMapping("/login")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
-        try {
-            // Authenticate the user using Spring Security's AuthenticationManager
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            // If authentication fails (bad username/password)
-            System.err.println("Authentication failed for user " + authRequest.getUsername() + ": " + e.getMessage());
-            return ResponseEntity.status(401).body("{\"message\": \"Incorrect username or password\"}");
-            // Or throw new BadCredentialsException("Incorrect username or password", e);
-        } catch (Exception e) {
-            // Catch any other authentication exceptions
-            System.err.println("An error occurred during authentication for user " + authRequest.getUsername() + ": " + e.getMessage());
-            return ResponseEntity.status(500).body("{\"message\": \"Authentication failed: " + e.getMessage() + "\"}");
-        }
-
-        //If authentication is successful, load UserDetails and generate JWT
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
-        final String jwt = jwtUtil.generateToken(userDetails);
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) {
+        logger.debug("Login attempt for email: {}", authRequest.getEmail());
         
-        // Get the user entity to include role information
-        User user = userRepository.findByUsername(authRequest.getUsername())
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        try {
+            // Validate input
+            if (authRequest.getEmail() == null || authRequest.getEmail().trim().isEmpty() ||
+                authRequest.getPassword() == null || authRequest.getPassword().trim().isEmpty()) {
+                logger.warn("Login attempt with empty email or password");
+                return ResponseEntity.badRequest().body(Map.of("message", "Email and password are required"));
+            }
 
-        // Create response with both token and user info
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", jwt);
-        response.put("username", user.getUsername());
-        response.put("role", user.getRole().name());
-        response.put("id", user.getId());
+            // Find user by email
+            User user = userRepository.findByEmail(authRequest.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + authRequest.getEmail()));
 
-        return ResponseEntity.ok(response);
+            // Authenticate user using username (email will be mapped to username internally)
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    user.getUsername(),
+                    authRequest.getPassword()
+                )
+            );
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Generate JWT token
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+            final String jwt = jwtUtil.generateToken(userDetails);
+
+            // Create response
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", jwt);
+            response.put("username", user.getUsername());
+            response.put("email", user.getEmail());
+            response.put("role", user.getRole().name());
+            response.put("id", user.getId());
+
+            logger.info("Successful login for email: {}", authRequest.getEmail());
+            return ResponseEntity.ok(response);
+
+        } catch (BadCredentialsException e) {
+            logger.warn("Failed login attempt for email: {} - Bad credentials", authRequest.getEmail());
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid email or password"));
+        } catch (DisabledException e) {
+            logger.warn("Failed login attempt for email: {} - Account disabled", authRequest.getEmail());
+            return ResponseEntity.status(401).body(Map.of("message", "Account is disabled"));
+        } catch (UsernameNotFoundException e) {
+            logger.warn("Failed login attempt - User not found: {}", authRequest.getEmail());
+            return ResponseEntity.status(401).body(Map.of("message", "Invalid email or password"));
+        } catch (Exception e) {
+            logger.error("Login error for email: {} - {}", authRequest.getEmail(), e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("message", "An error occurred during login"));
+        }
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        logger.debug("Token refresh request received");
+        
         try {
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String oldToken = authHeader.substring(7);
-                
-                // Validate the old token
-                if (jwtUtil.isTokenBlacklisted(oldToken)) {
-                    return ResponseEntity.status(401).body("{\"message\": \"Token is blacklisted\"}");
-                }
-
-                // Extract username from old token
-                String username = jwtUtil.extractUsername(oldToken);
-                if (username != null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    
-                    // Generate new token
-                    String newToken = jwtUtil.generateToken(userDetails);
-                    
-                    // Blacklist old token
-                    jwtUtil.invalidateToken(oldToken);
-                    
-                    Map<String, String> response = new HashMap<>();
-                    response.put("token", newToken);
-                    
-                    return ResponseEntity.ok(response);
-                }
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                logger.warn("Invalid authorization header format");
+                return ResponseEntity.status(401).body(Map.of("message", "Invalid authorization header"));
             }
-            return ResponseEntity.status(401).body("{\"message\": \"Invalid token format\"}");
+
+            String oldToken = authHeader.substring(7);
+            
+            if (jwtUtil.isTokenBlacklisted(oldToken)) {
+                logger.warn("Attempt to refresh blacklisted token");
+                return ResponseEntity.status(401).body(Map.of("message", "Token is blacklisted"));
+            }
+
+            String username = jwtUtil.extractUsername(oldToken);
+            if (username == null) {
+                logger.warn("Could not extract username from token");
+                return ResponseEntity.status(401).body(Map.of("message", "Invalid token"));
+            }
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            String newToken = jwtUtil.generateToken(userDetails);
+            jwtUtil.invalidateToken(oldToken);
+
+            logger.info("Token refreshed successfully for user: {}", username);
+            return ResponseEntity.ok(Map.of("token", newToken));
+
         } catch (Exception e) {
-            System.err.println("Error refreshing token: " + e.getMessage());
-            return ResponseEntity.status(401).body("{\"message\": \"Token refresh failed\"}");
+            logger.error("Error refreshing token: {}", e.getMessage(), e);
+            return ResponseEntity.status(401).body(Map.of("message", "Token refresh failed"));
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
+        logger.debug("Logout request received");
+        
         try {
-            // Clear the security context
             SecurityContextHolder.clearContext();
             
-            // Add the token to the blacklist in JwtUtil
             if (token != null && token.startsWith("Bearer ")) {
                 String jwt = token.substring(7);
                 jwtUtil.invalidateToken(jwt);
+                logger.info("User logged out successfully");
             }
             
-            return ResponseEntity.ok().body("{\"message\": \"Logged out successfully\"}");
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("{\"message\": \"Error during logout\"}");
+            logger.error("Error during logout: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of("message", "Error during logout"));
         }
     }
 

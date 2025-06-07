@@ -23,8 +23,10 @@ export class JwtInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip for login and refresh endpoints
-    if (request.url.includes('/api/auth/login') || request.url.includes('/api/auth/refresh')) {
+    // Skip for login, logout and refresh endpoints
+    if (request.url.includes('/api/auth/login') || 
+        request.url.includes('/api/auth/refresh') || 
+        request.url.includes('/api/auth/logout')) {
       return next.handle(request);
     }
 
@@ -46,27 +48,52 @@ export class JwtInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if ([401, 403].includes(error.status)) {
-          // Token might be expired or invalid
-          if (!this.isRefreshing) {
-            return this.handleExpiredToken(request, next);
-          } else {
-            // Wait for token refresh to complete
-            return this.refreshTokenSubject.pipe(
-              filter(token => token !== null),
-              take(1),
-              switchMap(token => {
-                return next.handle(this.addTokenToRequest(request, token));
-              }),
-              catchError(refreshError => {
-                // If refresh fails, logout and redirect
-                this.authService.logout();
-                this.router.navigate(['/login']);
-                return throwError(() => refreshError);
-              })
-            );
-          }
+        if (error.status === 401) {
+          return this.handle401Error(request, next);
         }
+        if (error.status === 403) {
+          // Clear auth data and redirect to login
+          this.authService.logout();
+          return throwError(() => error);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      this.refreshTokenSubject.next(null);
+
+      return this.authService.refreshToken().pipe(
+        switchMap((token: string) => {
+          this.isRefreshing = false;
+          this.refreshTokenSubject.next(token);
+          return next.handle(this.addTokenToRequest(request, token));
+        }),
+        catchError((error) => {
+          this.isRefreshing = false;
+          this.authService.logout();
+          return throwError(() => error);
+        })
+      );
+    }
+    
+    return this.refreshTokenSubject.pipe(
+      filter(token => token !== null),
+      take(1),
+      switchMap(token => next.handle(this.addTokenToRequest(request, token)))
+    );
+  }
+
+  private handleExpiredToken(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    return this.authService.refreshToken().pipe(
+      switchMap((token: string) => {
+        return next.handle(this.addTokenToRequest(request, token));
+      }),
+      catchError((error) => {
+        this.authService.logout();
         return throwError(() => error);
       })
     );
@@ -75,39 +102,8 @@ export class JwtInterceptor implements HttpInterceptor {
   private addTokenToRequest(request: HttpRequest<any>, token: string): HttpRequest<any> {
     return request.clone({
       setHeaders: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`
       }
     });
-  }
-
-  private handleExpiredToken(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
-
-      return this.authService.refreshToken().pipe(
-        switchMap((token: string) => {
-          this.refreshTokenSubject.next(token);
-          return next.handle(this.addTokenToRequest(request, token));
-        }),
-        catchError((error) => {
-          // If refresh fails, clear everything and redirect to login
-          this.authService.logout();
-          this.router.navigate(['/login']);
-          return throwError(() => error);
-        }),
-        finalize(() => {
-          this.isRefreshing = false;
-        })
-      );
-    }
-    
-    // If refresh is already in progress, wait for it to complete
-    return this.refreshTokenSubject.pipe(
-      filter(token => token !== null),
-      take(1),
-      switchMap(token => next.handle(this.addTokenToRequest(request, token)))
-    );
   }
 } 

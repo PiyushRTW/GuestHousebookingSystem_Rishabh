@@ -16,7 +16,6 @@ import { JwtModule } from '@auth0/angular-jwt';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-
 import { JwtInterceptor } from './interceptors/jwt.interceptor';
 
 
@@ -46,7 +45,7 @@ export function tokenGetter() {
       config: {
         tokenGetter: tokenGetter,
         allowedDomains: ['localhost:8080'],
-        disallowedRoutes: ['localhost:8080/api/auth/login']
+        disallowedRoutes: ['http://localhost:8080/api/auth/login']
       }
     })
   ],

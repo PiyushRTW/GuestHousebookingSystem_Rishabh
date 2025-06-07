@@ -9,7 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  username = '';
+  email = '';
   password = '';
   isLoading = false;
   hidePassword = true;
@@ -25,20 +25,32 @@ export class LoginComponent {
   }
 
   onLogin() {
-    if (!this.username || !this.password) {
-      this.showMessage('Please enter both username and password');
+    if (!this.email || !this.password) {
+      this.showMessage('Please enter both email and password');
+      return;
+    }
+
+    if (!this.isValidEmail(this.email)) {
+      this.showMessage('Please enter a valid email address');
       return;
     }
 
     this.isLoading = true;
-    console.log('Attempting login with username:', this.username);
-    this.authService.login(this.username, this.password).subscribe({
+    console.log('Attempting login with email:', this.email);
+    this.authService.login(this.email, this.password).subscribe({
       next: (user) => {
         console.log('Login response user:', user);
         this.isLoading = false;
         
         if (user && user.role) {
-          this.redirectBasedOnRole(user.role);
+          // Check for redirect URL first
+          const redirectUrl = this.authService.redirectUrl;
+          if (redirectUrl) {
+            this.authService.redirectUrl = null;
+            this.router.navigateByUrl(redirectUrl);
+          } else {
+            this.redirectBasedOnRole(user.role);
+          }
         } else {
           this.showMessage('Login failed: Invalid user data received');
           console.error('Invalid user data:', user);
@@ -49,7 +61,7 @@ export class LoginComponent {
         console.error('Login error details:', error);
         
         if (error.status === 401) {
-          this.showMessage('Invalid username or password');
+          this.showMessage('Invalid email or password');
         } else if (error.status === 403) {
           this.showMessage('Access forbidden. Please check your credentials.');
         } else {
@@ -57,6 +69,11 @@ export class LoginComponent {
         }
       }
     });
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
   }
 
   private redirectBasedOnRole(role: string | null) {

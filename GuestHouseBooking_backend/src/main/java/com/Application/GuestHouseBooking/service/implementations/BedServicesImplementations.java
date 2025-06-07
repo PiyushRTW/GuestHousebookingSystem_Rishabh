@@ -1,5 +1,12 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.Application.GuestHouseBooking.dtos.BedDTO;
 import com.Application.GuestHouseBooking.entity.Bed;
 import com.Application.GuestHouseBooking.entity.Room;
@@ -7,12 +14,6 @@ import com.Application.GuestHouseBooking.repository.BedRepository;
 import com.Application.GuestHouseBooking.repository.RoomRepository;
 import com.Application.GuestHouseBooking.service.BedServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class BedServicesImplementations implements BedServices {
@@ -32,19 +33,36 @@ public class BedServicesImplementations implements BedServices {
     private BedDTO convertToDTO(Bed bed) {
         BedDTO dto = new BedDTO();
         dto.setId(bed.getId());
-        dto.setRoomId(bed.getRoom().getId()); // Get ID from associated Room
+        dto.setRoomId(bed.getRoom().getId());
+        dto.setBedNumber(bed.getBedNumber());
+        dto.setIsAvailable(bed.getIsAvailable());
+        dto.setPricePerNight(bed.getPricePerNight());
         dto.setCreatedAt(bed.getCreatedAt());
         dto.setUpdatedAt(bed.getUpdatedAt());
+        dto.setCreatedBy(bed.getCreatedBy());
+        dto.setLastModifiedBy(bed.getLastModifiedBy());
         return dto;
     }
 
     private Bed convertToEntity(BedDTO bedDTO) {
         Bed bed = new Bed();
         bed.setId(bedDTO.getId());
+        bed.setBedNumber(bedDTO.getBedNumber());
+        bed.setIsAvailable(bedDTO.getIsAvailable());
+        bed.setPricePerNight(bedDTO.getPricePerNight());
 
+        // Set the room
         Room room = roomRepository.findById(bedDTO.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found with ID: " + bedDTO.getRoomId()));
         bed.setRoom(room);
+
+        // Set audit fields if provided
+        if (bedDTO.getCreatedBy() != null) {
+            bed.setCreatedBy(bedDTO.getCreatedBy());
+        }
+        if (bedDTO.getLastModifiedBy() != null) {
+            bed.setLastModifiedBy(bedDTO.getLastModifiedBy());
+        }
 
         return bed;
     }
@@ -156,5 +174,5 @@ public class BedServicesImplementations implements BedServices {
         }
         return false;
     }
-    }
+}
 

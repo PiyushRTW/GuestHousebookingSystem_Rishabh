@@ -18,6 +18,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -28,19 +31,23 @@ public class Bed {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
 
+    @NotNull(message = "Room is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Bed number is required")
+    @Column(nullable = false, unique = true)
     private String bedNumber;
 
+    @NotNull(message = "Availability status is required")
     @Column(nullable = false)
-    private Boolean isAvailable;
+    private Boolean isAvailable = true;  // Default to true
 
+    @NotNull(message = "Price per night is required")
+    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal pricePerNight;
 
@@ -52,13 +59,28 @@ public class Bed {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // --- Auditing fields (Added for Spring Data JPA Auditing) ---
-    @CreatedBy // Automatically filled by AuditorAware
+    @NotBlank(message = "Created by is required")
+    @CreatedBy
     @Column(nullable = false, updatable = false)
     private String createdBy;
 
-    @LastModifiedBy // Automatically filled by AuditorAware on update
+    @NotBlank(message = "Last modified by is required")
+    @LastModifiedBy
     @Column(nullable = false)
     private String lastModifiedBy;
-    // --- End of Auditing fields ---
+
+    // Helper method to check if bed is available for booking
+    public boolean isAvailableForBooking() {
+        return isAvailable != null && isAvailable;
+    }
+
+    // Helper method to mark bed as booked
+    public void markAsBooked() {
+        this.isAvailable = false;
+    }
+
+    // Helper method to mark bed as available
+    public void markAsAvailable() {
+        this.isAvailable = true;
+    }
 }

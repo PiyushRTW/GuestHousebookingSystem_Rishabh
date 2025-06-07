@@ -9,15 +9,18 @@
     <mat-card-content>
       <form class="login-form" (ngSubmit)="onLogin()" #loginForm="ngForm">
         <mat-form-field class="full-width" appearance="outline">
-          <mat-label>Username</mat-label>
+          <mat-label>Email</mat-label>
           <input matInput 
-                 placeholder="Enter your username" 
-                 [(ngModel)]="username" 
-                 name="username" 
+                 type="email"
+                 placeholder="Enter your email" 
+                 [(ngModel)]="email" 
+                 name="email" 
                  required
-                 #usernameInput="ngModel">
-          <mat-error *ngIf="usernameInput.invalid && usernameInput.touched">
-            Username is required
+                 email
+                 #emailInput="ngModel">
+          <mat-error *ngIf="emailInput.invalid && emailInput.touched">
+            <span *ngIf="emailInput.errors?.['required']">Email is required</span>
+            <span *ngIf="emailInput.errors?.['email']">Please enter a valid email address</span>
           </mat-error>
         </mat-form-field>
 
