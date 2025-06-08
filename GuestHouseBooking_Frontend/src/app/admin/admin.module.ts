@@ -36,6 +36,7 @@ import { ReservationsListComponent } from './reservations-list/reservations-list
 import { BedConfigurationComponent } from './rooms/bed-configuration/bed-configuration.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { SharedModule } from '../shared/shared.module';
+import { MatStepperModule } from '@angular/material/stepper';
 
 @NgModule({
   declarations: [
@@ -76,7 +77,8 @@ import { SharedModule } from '../shared/shared.module';
     MatSortModule,
     MatSnackBarModule,
     MatDividerModule,
-    SharedModule
+    SharedModule,
+    MatStepperModule
   ]
 })
 export class AdminModule { }

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { GuestHouseService, GuestHouseDTO } from 'src/app/services/guesthouse/guest-house.service';
+import { GuestHouseService } from 'src/app/services/guesthouse/guest-house.service';
+import { GuestHouse } from 'src/app/shared/models/guesthouse.model';
 import { RoomService } from 'src/app/services/rooms/room.service';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -12,7 +13,7 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./hotels.component.scss']
 })
 export class HotelsComponent implements OnInit {
-  guestHouses: (GuestHouseDTO & { totalRooms: number })[] = [];
+  guestHouses: (GuestHouse & { totalRooms: number })[] = [];
   loading: boolean = false;
   error: string | null = null;
 
@@ -44,7 +45,7 @@ export class HotelsComponent implements OnInit {
           
           // Create an array of room count observables for each guest house
           const roomCountObservables = guestHouses.map(guestHouse => 
-            this.roomService.getRoomsByGuestHouse(guestHouse.id!).pipe(
+            this.roomService.getRoomsByGuestHouseId(guestHouse.id!).pipe(
               map(rooms => {
                 console.log(`Rooms for guest house ${guestHouse.id}:`, rooms);
                 return { ...guestHouse, totalRooms: rooms.length };
@@ -83,7 +84,7 @@ export class HotelsComponent implements OnInit {
       });
   }
 
-  onGuestHouseSelect(guestHouse: GuestHouseDTO & { totalRooms: number }): void {
+  onGuestHouseSelect(guestHouse: GuestHouse & { totalRooms: number }): void {
     // Navigate to booking page with guest house ID
     this.router.navigate(['/user/booking-page'], {
       queryParams: { guestHouseId: guestHouse.id }

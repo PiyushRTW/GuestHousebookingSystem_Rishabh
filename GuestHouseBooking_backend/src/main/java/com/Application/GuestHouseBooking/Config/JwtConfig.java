@@ -11,16 +11,19 @@ public class JwtConfig {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}") // 24 hours in milliseconds
+    @Value("${jwt.expiration:86400000}") // 24 hours in milliseconds (default)
     private Long expiration;
 
-    @Value("${jwt.header}")
+    @Value("${jwt.header:Authorization}")
     private String header;
 
-    @Value("${jwt.prefix}")
+    @Value("${jwt.prefix:Bearer}")
     private String prefix;
 
-    // Add clock skew tolerance
-    @Value("${jwt.clock-skew}") // 5 minutes in milliseconds
+    @Value("${jwt.clock-skew:300000}") // 5 minutes in milliseconds (default)
     private Long clockSkew;
+
+    // Refresh token settings
+    @Value("${jwt.refresh.expiration:604800000}") // 7 days in milliseconds (default)
+    private Long refreshExpiration;
 }

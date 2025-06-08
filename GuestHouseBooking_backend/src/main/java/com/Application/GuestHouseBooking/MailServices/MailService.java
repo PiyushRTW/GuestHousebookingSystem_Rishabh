@@ -1,7 +1,7 @@
 package com.Application.GuestHouseBooking.MailServices;
 
-import com.Application.GuestHouseBooking.entity.Booking;
-import com.Application.GuestHouseBooking.entity.User;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
@@ -9,125 +9,229 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
+import com.Application.GuestHouseBooking.entity.Booking;
 
-    @Service
-    public class MailService {
+@Service
+public class MailService {
 
-        @Autowired
-        private JavaMailSender mailSender;
+    @Autowired
+    private JavaMailSender mailSender;
 
-        @Value("${spring.mail.username}") // Sender's email from properties
-        private String senderEmail;
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
-        @Value("${app.mail.admin-email}") // Admin's email from properties
-        private String adminEmail;
+    @Value("${app.mail.admin-email}")
+    private String adminEmail;
 
-        @Value("${app.mail.app-base-url}") // Base URL from properties
-        private String appBaseUrl;
+    @Value("${app.mail.app-base-url}")
+    private String appBaseUrl;
 
-        @Value("${app.mail.admin-pending-bookings-path}") // Admin pending bookings path
-        private String adminPendingBookingsPath;
+    @Value("${app.mail.admin-pending-bookings-path}")
+    private String adminPendingBookingsPath;
 
-        private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        public void sendBookingNotificationToAdmin(Booking booking, User bookingUser) {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(senderEmail);
-            message.setTo(adminEmail);
-            message.setSubject("New Pending Booking Notification - ID: " + booking.getId());
+    public void sendBookingNotificationToAdmin(Booking booking) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(adminEmail);
+        message.setSubject("New Booking Request - ID: " + booking.getId());
 
-            String adminBookingLink = appBaseUrl + adminPendingBookingsPath;
+        String adminBookingLink = appBaseUrl + adminPendingBookingsPath;
 
-            String emailContent = String.format(
-                    "Dear Admin,\n\n" +
-                            "A new booking has been created and is awaiting your approval:\n\n" +
-                            "Booking ID: %d\n" +
-                            "User: %s (Email: %s)\n" +
-                            "Bed ID: %d\n" +
-                            "Check-in Date: %s\n" +
-                            "Check-out Date: %s\n" +
-                            "Total Price: %.2f\n" +
-                            "Status: %s\n\n" +
-                            "Please visit the admin dashboard to review and approve/deny this booking:\n" +
-                            "%s\n\n" +
-                            "Thank you,\n" +
-                            "Your Booking System",
-                    booking.getId(),
-                    bookingUser.getFirstName() + " " + bookingUser.getLastName(),
-                    bookingUser.getEmail(),
-                    booking.getBed().getId(),
-                    booking.getCheckInDate().format(DATE_FORMATTER),
-                    booking.getCheckOutDate().format(DATE_FORMATTER),
-                    booking.getTotalPrice(),
-                    booking.getStatus().name(),
-                    adminBookingLink
-            );
+        String emailContent = String.format(
+                "Dear Admin,\n\n" +
+                "A new booking request has been received:\n\n" +
+                "Booking Details:\n" +
+                "---------------\n" +
+                "Booking ID: %d\n" +
+                "Guest Name: %s %s\n" +
+                "Guest Email: %s\n" +
+                "Guest Phone: %s\n" +
+                "Guest Gender: %s\n" +
+                "Guest Address: %s\n\n" +
+                "Accommodation Details:\n" +
+                "--------------------\n" +
+                "Guest House: %s\n" +
+                "Room Number: %s\n" +
+                "Bed Number: %s\n" +
+                "Check-in Date: %s\n" +
+                "Check-out Date: %s\n" +
+                "Total Price: %.2f\n" +
+                "Purpose of Stay: %s\n\n" +
+                "Please review this booking request at:\n%s\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking System",
+                booking.getId(),
+                booking.getFirstName(), booking.getLastName(),
+                booking.getEmail(),
+                booking.getPhoneNumber(),
+                booking.getGender(),
+                booking.getAddress(),
+                booking.getBed().getRoom().getGuestHouse().getName(),
+                booking.getBed().getRoom().getRoomNumber(),
+                booking.getBed().getBedNumber(),
+                booking.getCheckInDate().format(DATE_FORMATTER),
+                booking.getCheckOutDate().format(DATE_FORMATTER),
+                booking.getTotalPrice(),
+                booking.getPurpose(),
+                adminBookingLink
+        );
 
-            message.setText(emailContent);
+        message.setText(emailContent);
+        sendEmail(message, "admin notification", booking.getId());
+    }
 
-            try {
-                mailSender.send(message);
-                System.out.println("Admin notification email sent for Booking ID: " + booking.getId());
-            } catch (MailException e) {
-                System.err.println("Error sending admin notification email for Booking ID " + booking.getId() + ": " + e.getMessage());
-            }
-        }
+    public void sendBookingConfirmationToGuest(Booking booking) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(booking.getEmail());
+        message.setSubject("Booking Confirmed - ID: " + booking.getId());
 
+        String emailContent = String.format(
+                "Dear %s,\n\n" +
+                "Your booking has been confirmed!\n\n" +
+                "Booking Details:\n" +
+                "---------------\n" +
+                "Booking ID: %d\n" +
+                "Check-in Date: %s\n" +
+                "Check-out Date: %s\n\n" +
+                "Accommodation Details:\n" +
+                "--------------------\n" +
+                "Guest House: %s\n" +
+                "Address: %s\n" +
+                "Room Number: %s\n" +
+                "Bed Number: %s\n" +
+                "Total Price: %.2f\n\n" +
+                "Important Information:\n" +
+                "--------------------\n" +
+                "- Check-in time: 2:00 PM\n" +
+                "- Check-out time: 12:00 PM\n" +
+                "- Please bring a valid ID for check-in\n" +
+                "- Payment should be made at check-in\n\n" +
+                "Contact Information:\n" +
+                "-------------------\n" +
+                "Guest House Phone: %s\n" +
+                "Guest House Email: %s\n\n" +
+                "We look forward to hosting you!\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking Team",
+                booking.getFirstName(),
+                booking.getId(),
+                booking.getCheckInDate().format(DATE_FORMATTER),
+                booking.getCheckOutDate().format(DATE_FORMATTER),
+                booking.getBed().getRoom().getGuestHouse().getName(),
+                booking.getBed().getRoom().getGuestHouse().getAddress(),
+                booking.getBed().getRoom().getRoomNumber(),
+                booking.getBed().getBedNumber(),
+                booking.getTotalPrice(),
+                booking.getBed().getRoom().getGuestHouse().getContactNumber(),
+                booking.getBed().getRoom().getGuestHouse().getEmail()
+        );
 
+        message.setText(emailContent);
+        sendEmail(message, "booking confirmation", booking.getId());
+    }
 
-        public void sendBookingStatusUpdateToUser(Booking booking, User bookingUser, Booking.BookingStatus oldStatus) {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(senderEmail);
-            message.setTo(bookingUser.getEmail());
-            message.setSubject("Your Booking Status Update - ID: " + booking.getId());
+    public void sendBookingRejectionToGuest(Booking booking, String reason) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(booking.getEmail());
+        message.setSubject("Booking Request Denied - ID: " + booking.getId());
 
-            String statusMessage = switch (booking.getStatus()) {
-                case CONFIRMED -> "Your booking (ID: " + booking.getId() + ") for Bed ID " + booking.getBed().getId() +
-                        " from " + booking.getCheckInDate().format(DATE_FORMATTER) + " to " +
-                        booking.getCheckOutDate().format(DATE_FORMATTER) + " has been **APPROVED**.\n" +
-                        "We look forward to hosting you!";
-                case DENIED ->
-                        "We regret to inform you that your booking (ID: " + booking.getId() + ") for Bed ID " + booking.getBed().getId() +
-                                " from " + booking.getCheckInDate().format(DATE_FORMATTER) + " to " +
-                                booking.getCheckOutDate().format(DATE_FORMATTER) + " has been **DENIED**.\n" +
-                                "Please contact support for more details or try booking other available beds.";
-                case CANCELED -> "Your booking (ID: " + booking.getId() + ") for Bed ID " + booking.getBed().getId() +
-                        " from " + booking.getCheckInDate().format(DATE_FORMATTER) + " to " +
-                        booking.getCheckOutDate().format(DATE_FORMATTER) + " has been **CANCELED**.";
-                default ->
-                        "The status of your booking (ID: " + booking.getId() + ") has been updated to: " + booking.getStatus().name() + ".";
-            };
+        String emailContent = String.format(
+                "Dear %s,\n\n" +
+                "We regret to inform you that your booking request has been denied.\n\n" +
+                "Booking Details:\n" +
+                "---------------\n" +
+                "Booking ID: %d\n" +
+                "Guest House: %s\n" +
+                "Check-in Date: %s\n" +
+                "Check-out Date: %s\n\n" +
+                "Reason for Denial: %s\n\n" +
+                "You can try booking another available accommodation or contact us for assistance.\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking Team",
+                booking.getFirstName(),
+                booking.getId(),
+                booking.getBed().getRoom().getGuestHouse().getName(),
+                booking.getCheckInDate().format(DATE_FORMATTER),
+                booking.getCheckOutDate().format(DATE_FORMATTER),
+                reason != null ? reason : "No specific reason provided"
+        );
 
-            String emailContent = String.format(
-                    "Dear %s,\n\n" +
-                            "%s\n\n" +
-                            "Booking Details:\n" +
-                            "  Booking ID: %d\n" +
-                            "  Bed ID: %d\n" +
-                            "  Check-in: %s\n" +
-                            "  Check-out: %s\n" +
-                            "  Total Price: %.2f\n" +
-                            "  Current Status: %s\n\n" +
-                            "Thank you,\n" +
-                            "Your Booking System Team",
-                    bookingUser.getFirstName(),
-                    statusMessage,
-                    booking.getId(),
-                    booking.getBed().getId(),
-                    booking.getCheckInDate().format(DATE_FORMATTER),
-                    booking.getCheckOutDate().format(DATE_FORMATTER),
-                    booking.getTotalPrice(),
-                    booking.getStatus().name()
-            );
+        message.setText(emailContent);
+        sendEmail(message, "booking rejection", booking.getId());
+    }
 
-            message.setText(emailContent);
+    public void sendBookingCancellationToGuest(Booking booking, String reason) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(booking.getEmail());
+        message.setSubject("Booking Cancelled - ID: " + booking.getId());
 
-            try {
-                mailSender.send(message);
-                System.out.println("User notification email sent to " + bookingUser.getEmail() + " for Booking ID: " + booking.getId());
-            } catch (MailException e) {
-                System.err.println("Error sending user notification email for Booking ID " + booking.getId() + " to " + bookingUser.getEmail() + ": " + e.getMessage());
-            }
+        String emailContent = String.format(
+                "Dear %s,\n\n" +
+                "Your booking has been cancelled.\n\n" +
+                "Booking Details:\n" +
+                "---------------\n" +
+                "Booking ID: %d\n" +
+                "Guest House: %s\n" +
+                "Check-in Date: %s\n" +
+                "Check-out Date: %s\n\n" +
+                "Reason for Cancellation: %s\n\n" +
+                "If you did not request this cancellation, please contact us immediately.\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking Team",
+                booking.getFirstName(),
+                booking.getId(),
+                booking.getBed().getRoom().getGuestHouse().getName(),
+                booking.getCheckInDate().format(DATE_FORMATTER),
+                booking.getCheckOutDate().format(DATE_FORMATTER),
+                reason != null ? reason : "No specific reason provided"
+        );
+
+        message.setText(emailContent);
+        sendEmail(message, "booking cancellation", booking.getId());
+    }
+
+    public void sendBookingCompletionToGuest(Booking booking) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(booking.getEmail());
+        message.setSubject("Thank You for Your Stay - Booking ID: " + booking.getId());
+
+        String emailContent = String.format(
+                "Dear %s,\n\n" +
+                "Thank you for choosing our Guest House! We hope you enjoyed your stay.\n\n" +
+                "Stay Details:\n" +
+                "-------------\n" +
+                "Booking ID: %d\n" +
+                "Guest House: %s\n" +
+                "Check-in Date: %s\n" +
+                "Check-out Date: %s\n\n" +
+                "We would love to hear about your experience. Please take a moment to rate your stay.\n\n" +
+                "We look forward to hosting you again!\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking Team",
+                booking.getFirstName(),
+                booking.getId(),
+                booking.getBed().getRoom().getGuestHouse().getName(),
+                booking.getCheckInDate().format(DATE_FORMATTER),
+                booking.getCheckOutDate().format(DATE_FORMATTER)
+        );
+
+        message.setText(emailContent);
+        sendEmail(message, "stay completion", booking.getId());
+    }
+
+    private void sendEmail(SimpleMailMessage message, String type, Long bookingId) {
+        try {
+            mailSender.send(message);
+            System.out.println("Successfully sent " + type + " email for Booking ID: " + bookingId);
+        } catch (MailException e) {
+            System.err.println("Failed to send " + type + " email for Booking ID " + bookingId + ": " + e.getMessage());
+            e.printStackTrace(); // For debugging
         }
     }
+}

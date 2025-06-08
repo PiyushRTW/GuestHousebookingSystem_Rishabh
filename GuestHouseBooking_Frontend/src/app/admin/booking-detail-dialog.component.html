@@ -1,38 +1,129 @@
-    <h1 mat-dialog-title>Booking Details - {{ data.id }}</h1>
-    <div mat-dialog-content class="booking-details-content">
-      <div class="detail-section">
-        <h3>Guest Information</h3>
-        <p><strong>Name:</strong> {{ data.guestName }}</p>
-        <p><strong>Email:</strong> {{ data.guestEmail }}</p>
-        <p><strong>Phone:</strong> {{ data.guestPhone }}</p>
-      </div>
+<div class="booking-details-dialog">
+  <div class="dialog-header" mat-dialog-title>
+    <h2>Booking Details</h2>
+    <span class="booking-id">#{{ data.id }}</span>
+  </div>
 
-      <div class="detail-section">
-        <h3>Booking Information</h3>
-        <p><strong>Guest House:</strong> {{ data.hotelName }}</p>
-        <p><strong>Room:</strong> {{ data.roomNumber }} ({{ data.bedType | titlecase }})</p>
-        <p><strong>Check-in Date:</strong> {{ data.checkInDate | date:'mediumDate' }}</p>
-        <p><strong>Check-out Date:</strong> {{ data.checkOutDate | date:'mediumDate' }}</p>
-        <p><strong>Nights:</strong> {{ data.numberOfNights }}</p>
-        <p><strong>Price per Night:</strong> {{ data.pricePerNight | currency:'USD':'symbol':'1.2-2' }}</p>
-        <p><strong>Total Cost:</strong> {{ data.totalCost | currency:'USD':'symbol':'1.2-2' }}</p>
-        <p><strong>Booking Date:</strong> {{ data.bookingDate | date:'medium' }}</p>
-        <p><strong>Status:</strong>
-          <span [ngClass]="{'status-confirmed': data.status === 'Confirmed',
-                            'status-pending': data.status === 'Pending',
-                            'status-cancelled': data.status === 'Cancelled',
-                            'status-completed': data.status === 'Completed'}">
-            {{ data.status }}
-          </span>
-        </p>
-      </div>
+  <mat-divider></mat-divider>
 
-      <div class="detail-section" *ngIf="data.approvedBy">
-        <h3>Approval Details</h3>
-        <p><strong>Approved By:</strong> {{ data.approvedBy }}</p>
-        <p><strong>Approval Date:</strong> {{ data.approvalDate | date:'medium' }}</p>
-      </div>
+  <div mat-dialog-content class="booking-details-content">
+    <!-- Status Banner -->
+    <div class="status-banner" [ngClass]="getStatusClass(data.status)">
+      <mat-icon>{{ getStatusIcon(data.status) }}</mat-icon>
+      <span>{{ data.status }}</span>
     </div>
-    <div mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close()">Close</button>
+
+    <div class="details-grid">
+      <!-- Guest Information Card -->
+      <mat-card class="detail-card guest-info">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>person</mat-icon>
+          <mat-card-title>Guest Information</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-row">
+            <span class="label">Name:</span>
+            <span class="value">{{ data.firstName }} {{ data.lastName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Email:</span>
+            <span class="value">{{ data.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Phone:</span>
+            <span class="value">{{ data.phoneNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Gender:</span>
+            <span class="value">{{ data.gender }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Address:</span>
+            <span class="value">{{ data.address }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Accommodation Details Card -->
+      <mat-card class="detail-card accommodation-info">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>hotel</mat-icon>
+          <mat-card-title>Accommodation Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-row">
+            <span class="label">Guest House:</span>
+            <span class="value">{{ data.guestHouseName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Room Number:</span>
+            <span class="value">{{ data.roomNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Bed Number:</span>
+            <span class="value">{{ data.bedNumber }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Booking Details Card -->
+      <mat-card class="detail-card booking-info">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>event</mat-icon>
+          <mat-card-title>Booking Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-row">
+            <span class="label">Check-in:</span>
+            <span class="value">{{ data.checkInDate | date:'medium' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Check-out:</span>
+            <span class="value">{{ data.checkOutDate | date:'medium' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Total Price:</span>
+            <span class="value highlight">{{ data.totalPrice | currency:'USD':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Purpose:</span>
+            <span class="value">{{ data.purpose || 'Not specified' }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Audit Information Card -->
+      <mat-card class="detail-card audit-info">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>history</mat-icon>
+          <mat-card-title>Audit Information</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ data.createdBy }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Created At:</span>
+            <span class="value">{{ data.createdAt | date:'medium' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ data.lastModifiedBy }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Last Modified At:</span>
+            <span class="value">{{ data.updatedAt | date:'medium' }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="dialogRef.close()">Close</button>
+    <button mat-raised-button color="primary" [mat-dialog-close]="true">OK</button>
+  </div>
+</div>

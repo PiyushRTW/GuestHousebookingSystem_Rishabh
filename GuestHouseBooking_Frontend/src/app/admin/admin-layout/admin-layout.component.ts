@@ -22,6 +22,7 @@ export class AdminLayoutComponent {
     );
 
   isSidebarOpen = true;
+  adminPhotoUrl = 'assets/my_photo.jpg';
 
   constructor(
     private breakpointObserver: BreakpointObserver,
@@ -30,8 +31,7 @@ export class AdminLayoutComponent {
   ) {}
 
   get adminName(): string {
-    const user = this.authService.currentUserValue;
-    return user ? `${user.firstName} ${user.lastName}` : 'Admin';
+    return 'Piyush Rathwa'; // Replace with your actual name
   }
 
   toggleDrawer() {

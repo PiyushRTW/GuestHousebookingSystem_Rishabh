@@ -10,6 +10,7 @@ export interface BookingLog {
 
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators, ValidatorFn } from '@angular/forms'; // Import FormBuilder, FormGroup, and ValidatorFn
+import { DashboardService } from 'src/app/services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,6 +18,11 @@ import { AbstractControl, FormBuilder, FormGroup, Validators, ValidatorFn } from
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
+  stats: any = {};
+  reportForm: FormGroup;
+  reportStats: any = {};
+  loading = false;
+  reportLoading = false;
 
   // Overall statistics (can remain static for now or be fetched globally)
   totalHotels: number = 5;
@@ -50,10 +56,18 @@ export class DashboardComponent implements OnInit {
     { id: 12, checkInDate: new Date('2024-05-18'), checkOutDate: new Date('2024-05-22'), revenue: 700, guestId: 111, guestName: 'Karl' },
   ];
 
+  constructor(
+    private dashboardService: DashboardService,
+    private fb: FormBuilder
+  ) {
+    this.reportForm = this.fb.group({
+      startDate: [''],
+      endDate: ['']
+    });
+  }
 
-  constructor(private fb: FormBuilder) { } // Inject FormBuilder
-
-  ngOnInit(): void {
+  ngOnInit() {
+    this.loadOverallStats();
     // Initialize the date range form
     this.dateRangeForm = this.fb.group({
       startDate: [null, Validators.required],
@@ -64,6 +78,20 @@ export class DashboardComponent implements OnInit {
     // For example, current month:
     // this.setDefaultDateRange();
     // this.generateReport(); // Call it here if you set a default
+  }
+
+  loadOverallStats() {
+    this.loading = true;
+    this.dashboardService.getOverallStats().subscribe({
+      next: (data) => {
+        this.stats = data;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading stats:', error);
+        this.loading = false;
+      }
+    });
   }
 
   // Optional: Set a default date range (e.g., current month)
@@ -89,66 +117,21 @@ export class DashboardComponent implements OnInit {
     return null;
   };
 
-
-  generateReport(): void {
-    // Manually run validators for cross-field validation
-    this.dateRangeForm.setValidators(this.dateRangeValidator);
-    this.dateRangeForm.updateValueAndValidity();
-
-
-    if (this.dateRangeForm.valid) {
-      const startDate: Date = this.dateRangeForm.get('startDate')?.value;
-      const endDate: Date = this.dateRangeForm.get('endDate')?.value;
-
-      let totalRevenue = 0;
-      let checkIns = 0;
-      let checkOuts = 0;
-      const guestsVisited = new Set<number>(); // Use a Set to count unique guests
-
-      this.mockBookingLogs.forEach(log => {
-        // Normalize dates to start of day for accurate comparison
-        const logCheckInDate = new Date(log.checkInDate.getFullYear(), log.checkInDate.getMonth(), log.checkInDate.getDate());
-        const logCheckOutDate = new Date(log.checkOutDate.getFullYear(), log.checkOutDate.getMonth(), log.checkOutDate.getDate());
-        const reportStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const reportEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-
-        // Check if booking is within the report period
-        // A booking is "relevant" if its check-in OR check-out date falls within the period
-        // OR if the booking spans the entire period.
-        const isBookingRelevant =
-            (logCheckInDate >= reportStartDate && logCheckInDate <= reportEndDate) || // Check-in within range
-            (logCheckOutDate >= reportStartDate && logCheckOutDate <= reportEndDate) || // Check-out within range
-            (logCheckInDate < reportStartDate && logCheckOutDate > reportEndDate); // Booking spans the range
-
-        if (isBookingRelevant) {
-          totalRevenue += log.revenue;
-          guestsVisited.add(log.guestId); // Add guest ID to the set
-
-          // Count check-ins that fall exactly on a date within the range
-          if (logCheckInDate >= reportStartDate && logCheckInDate <= reportEndDate) {
-            checkIns++;
-          }
-          // Count check-outs that fall exactly on a date within the range
-          if (logCheckOutDate >= reportStartDate && logCheckOutDate <= reportEndDate) {
-            checkOuts++;
-          }
+  generateReport() {
+    if (this.reportForm.valid) {
+      this.reportLoading = true;
+      const { startDate, endDate } = this.reportForm.value;
+      
+      this.dashboardService.getPeriodReport(startDate, endDate).subscribe({
+        next: (data) => {
+          this.reportStats = data;
+          this.reportLoading = false;
+        },
+        error: (error) => {
+          console.error('Error generating report:', error);
+          this.reportLoading = false;
         }
       });
-
-      this.periodRevenue = totalRevenue;
-      this.periodGuestsVisited = guestsVisited.size;
-      this.periodCheckIns = checkIns;
-      this.periodCheckOuts = checkOuts;
-
-      console.log('Report generated for:', startDate, 'to', endDate);
-      console.log('Revenue:', this.periodRevenue);
-      console.log('Guests Visited:', this.periodGuestsVisited);
-      console.log('Check-ins:', this.periodCheckIns);
-      console.log('Check-outs:', this.periodCheckOuts);
-
-    } else {
-      this.dateRangeForm.markAllAsTouched(); // Show validation errors
-      console.error('Invalid date range. Please select valid start and end dates.');
     }
   }
 }

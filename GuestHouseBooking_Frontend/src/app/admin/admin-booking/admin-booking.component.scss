@@ -1,71 +1,142 @@
 .admin-booking-container {
-  padding: 20px;
-  max-width: 800px; /* Adjust max-width for better form layout */
-  margin: 0 auto; /* Center the container */
-}
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
 
-.booking-card {
-  padding: 25px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  border-radius: 8px;
+  ::ng-deep .mat-stepper-horizontal {
+    background-color: transparent;
 
-  mat-card-title {
-    font-size: 1.8em;
-    margin-bottom: 25px;
-    color: #3f51b5; /* Primary color */
-    text-align: center;
+    .mat-step-header {
+      &.mat-step-header-ripple {
+        background-color: rgba(63, 81, 181, 0.1);
+      }
+
+      .mat-step-icon {
+        background-color: #3f51b5;
+      }
+
+      .mat-step-label {
+        color: #333;
+        font-weight: 500;
+      }
+    }
   }
 
-  .booking-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Two columns */
-    gap: 20px; /* Space between grid items */
+  .form-section {
+    padding: 24px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    // Span full width for specific elements
-    .full-width {
-      grid-column: 1 / -1; /* Spans across all columns */
-    }
-
-    .section-title {
-      grid-column: 1 / -1;
-      font-size: 1.2em;
+    h3 {
+      color: #3f51b5;
+      margin: 0 0 24px;
+      font-size: 1.5em;
       font-weight: 500;
-      color: #555;
-      margin-top: 15px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 5px;
     }
 
-    // Adjust specific form fields to take full width if needed
-    mat-form-field {
-      width: 100%;
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+
+      .full-width {
+        grid-column: 1 / -1;
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
     }
 
-    // Align date pickers nicely
-    mat-form-field:nth-child(even) {
-        // This might target the second date picker, make sure it fits
-    }
-
-    .form-level-error {
-      grid-column: 1 / -1; /* Span across all columns */
+    .error-message {
+      grid-column: 1 / -1;
       color: #f44336;
       font-size: 0.75em;
       margin-top: -10px;
-      margin-bottom: 15px;
-      text-align: center;
+      margin-bottom: 10px;
+    }
+  }
+
+  .price-summary {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    border-left: 4px solid #3f51b5;
+
+    h4 {
+      color: #3f51b5;
+      margin: 0 0 16px;
+      font-size: 1.2em;
     }
 
-    .form-actions {
-      grid-column: 1 / -1; /* Span across all columns */
-      display: flex;
-      justify-content: flex-end; /* Align button to the right */
-      margin-top: 20px;
+    .summary-grid {
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
 
-      button {
-        padding: 10px 25px;
-        font-size: 1.1em;
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &.total {
+          font-weight: 500;
+          color: #3f51b5;
+          font-size: 1.1em;
+          margin-top: 8px;
+          padding-top: 16px;
+          border-top: 2px solid #e0e0e0;
+        }
+
+        span {
+          &:first-child {
+            color: #666;
+          }
+        }
       }
     }
+  }
+
+  .step-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+  }
+
+  .confirmation-section {
+    text-align: center;
+    padding: 48px 24px;
+
+    .success-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      color: #4caf50;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      color: #4caf50;
+      font-size: 1.8em;
+      margin: 0 0 16px;
+    }
+
+    p {
+      color: #666;
+      font-size: 1.1em;
+      margin: 0 0 24px;
+    }
+  }
+
+  .loading-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    color: #666;
   }
 }

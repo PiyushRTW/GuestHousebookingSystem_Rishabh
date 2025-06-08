@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { BookingService } from '../../services/booking/booking.service';
-import { BookingRequest } from '../../shared/interfaces/booking-request.interface';
+import { BookingService } from 'src/app/services/bookings/booking.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Booking, BookingStatus } from 'src/app/shared/models/booking.model';
 
 @Component({
   selector: 'app-guests',
@@ -9,17 +9,16 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./guests.component.scss']
 })
 export class GuestsComponent implements OnInit {
-  bookingRequests: BookingRequest[] = [];
+  bookingRequests: Booking[] = [];
   displayedColumns: string[] = [
-    'requestId',
+    'id',
     'guestName',
-    'hotelName',
-    'roomName',
-    'arrivalDate',
-    'departureDate',
-    'numberOfGuests',
-    'requestDate',
+    'guestHouseName',
+    'roomNumber',
+    'checkInDate',
+    'checkOutDate',
     'status',
+    'createdAt',
     'actions'
   ];
   isLoading: boolean = true;
@@ -35,9 +34,10 @@ export class GuestsComponent implements OnInit {
 
   loadBookingRequests() {
     this.isLoading = true;
-    this.bookingService.getPendingBookings().subscribe({
-      next: (requests) => {
-        this.bookingRequests = requests;
+    this.bookingService.getAllBookings().subscribe({
+      next: (bookings) => {
+        // Filter only PENDING bookings
+        this.bookingRequests = bookings.filter(b => b.status === BookingStatus.PENDING);
         this.isLoading = false;
       },
       error: (error) => {
@@ -50,13 +50,13 @@ export class GuestsComponent implements OnInit {
     });
   }
 
-  approveRequest(requestId: string) {
-    this.bookingService.approveBooking(requestId).subscribe({
+  approveRequest(bookingId: number) {
+    this.bookingService.approveBooking(bookingId).subscribe({
       next: () => {
         this.snackBar.open('Booking request approved successfully', 'Close', {
           duration: 3000
         });
-        this.loadBookingRequests(); // Reload the list
+        this.loadBookingRequests();
       },
       error: (error) => {
         console.error('Error approving request:', error);
@@ -67,13 +67,13 @@ export class GuestsComponent implements OnInit {
     });
   }
 
-  rejectRequest(requestId: string) {
-    this.bookingService.rejectBooking(requestId).subscribe({
+  rejectRequest(bookingId: number) {
+    this.bookingService.rejectBooking(bookingId).subscribe({
       next: () => {
         this.snackBar.open('Booking request rejected successfully', 'Close', {
           duration: 3000
         });
-        this.loadBookingRequests(); // Reload the list
+        this.loadBookingRequests();
       },
       error: (error) => {
         console.error('Error rejecting request:', error);
@@ -84,13 +84,13 @@ export class GuestsComponent implements OnInit {
     });
   }
 
-  getStatusClass(status: 'Pending' | 'Approved' | 'Rejected') {
+  getStatusClass(status: string): string {
     switch (status) {
-      case 'Pending':
+      case BookingStatus.PENDING:
         return 'status-pending';
-      case 'Approved':
+      case BookingStatus.CONFIRMED:
         return 'status-approved';
-      case 'Rejected':
+      case BookingStatus.DENIED:
         return 'status-rejected';
       default:
         return '';

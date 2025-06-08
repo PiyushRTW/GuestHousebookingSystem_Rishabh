@@ -1,45 +1,60 @@
 import { Injectable } from '@angular/core';
-import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthGuard implements CanActivate {
+export class AuthGuard {
   constructor(
-    private router: Router,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private router: Router
   ) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    if (this.authService.isAuthenticated()) {
-      // Check if user has required role
-      const requiredRole = route.data['role'];
-      if (requiredRole) {
-        const userRole = this.authService.userRole;
-        if (userRole !== requiredRole) {
-          this.snackBar.open('You do not have permission to access this page', 'Close', {
-            duration: 5000
-          });
-          this.router.navigate(['/']);
-          return false;
-        }
-      }
-      return true;
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean> | boolean {
+    if (!this.authService.isAuthenticated()) {
+      // Store the attempted URL for redirecting
+      this.authService.redirectUrl = state.url;
+      this.router.navigate(['/login']);
+      return false;
     }
 
-    // Store attempted URL for redirecting
-    this.authService.redirectUrl = state.url;
-    
-    this.snackBar.open('Please log in to continue', 'Close', {
-      duration: 5000
-    });
-    
-    this.router.navigate(['/login'], {
-      queryParams: { returnUrl: state.url }
-    });
-    return false;
+    // Check if token is about to expire (within 5 minutes)
+    const token = this.authService.getToken();
+    if (token) {
+      const tokenExp = new Date(JSON.parse(atob(token.split('.')[1])).exp * 1000);
+      const now = new Date();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (tokenExp.getTime() - now.getTime() < fiveMinutes) {
+        // Token is about to expire, try to refresh
+        return this.authService.refreshToken().pipe(
+          map(() => true),
+          catchError(() => {
+            this.authService.redirectUrl = state.url;
+            this.router.navigate(['/login']);
+            return of(false);
+          })
+        );
+      }
+    }
+
+    // Check role-based access if required
+    if (route.data['roles'] && !this.checkRoles(route.data['roles'])) {
+      this.router.navigate(['/unauthorized']);
+      return false;
+    }
+
+    return true;
   }
-} 
+
+  private checkRoles(roles: string[]): boolean {
+    const userRole = this.authService.userRole;
+    return userRole ? roles.includes(userRole) : false;
+  }
+}

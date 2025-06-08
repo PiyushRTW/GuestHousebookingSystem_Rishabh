@@ -10,6 +10,9 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -22,12 +25,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Entity
 @Table(name = "booking")
 @Data
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Booking {
 
     @Id
@@ -35,13 +42,39 @@ public class Booking {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user; // The user who made the booking
+    @JoinColumn(name = "user_id", nullable = true) // Made nullable for admin bookings
+    private User user; // The user who made the booking (optional for admin bookings)
 
-    // *** MODIFICATION HERE: Booking is now for a specific Bed ***
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bed_id", nullable = false)
     private Bed bed; // The specific bed that is booked
+
+    // Guest Information (Required for all bookings)
+    @NotBlank(message = "First name is required")
+    @Column(nullable = false)
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Column(nullable = false)
+    private String lastName;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Please provide a valid email address")
+    @Column(nullable = false)
+    private String email;
+
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^\\d{10}$", message = "Phone number must be 10 digits")
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @NotBlank(message = "Gender is required")
+    @Column(nullable = false)
+    private String gender;
+
+    @NotBlank(message = "Address is required")
+    @Column(nullable = false)
+    private String address;
 
     @Column(nullable = false)
     private LocalDate checkInDate;
@@ -56,7 +89,8 @@ public class Booking {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-    private String specialRequests;
+    @Column(columnDefinition = "TEXT")
+    private String purpose; // Changed from specialRequests to purpose
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -80,4 +114,16 @@ public class Booking {
         PENDING, CONFIRMED, CANCELED, COMPLETED, DENIED
     }
 
+    @Override
+    public String toString() {
+        return "Booking{" +
+                "id=" + id +
+                ", userId=" + (user != null ? user.getId() : null) +
+                ", bedId=" + (bed != null ? bed.getId() : null) +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", status=" + status +
+                '}';
+    }
 }

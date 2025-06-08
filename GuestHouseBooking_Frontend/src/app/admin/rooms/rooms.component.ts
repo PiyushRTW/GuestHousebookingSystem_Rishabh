@@ -1,12 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RoomService, RoomDTO } from '../../services/rooms/room.service';
-import { GuestHouseService, GuestHouseDTO } from '../../services/guesthouse/guest-house.service';
+import { RoomService } from '../../services/rooms/room.service';
+import { GuestHouseService } from '../../services/guesthouse/guest-house.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { finalize, takeUntil, catchError } from 'rxjs/operators';
 import { Subject, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { Room } from '../../shared/models/room.model';
+import { GuestHouse } from '../../shared/models/guesthouse.model';
 
 @Component({
   selector: 'app-rooms',
@@ -15,8 +17,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class RoomsComponent implements OnInit, OnDestroy {
   roomForm!: FormGroup;
-  guestHouses: GuestHouseDTO[] = [];
-  rooms: RoomDTO[] = [];
+  guestHouses: GuestHouse[] = [];
+  rooms: Room[] = [];
   isLoading = false;
   private destroy$ = new Subject<void>();
 
@@ -108,14 +110,17 @@ export class RoomsComponent implements OnInit, OnDestroy {
   loadRooms(guestHouseId: number): void {
     this.isLoading = true;
     this.rooms = []; // Clear existing rooms while loading
-    this.roomService.getRoomsByGuestHouse(guestHouseId)
+    this.roomService.getRoomsByGuestHouseId(guestHouseId)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.isLoading = false)
       )
       .subscribe({
         next: (rooms) => {
-          this.rooms = rooms;
+          this.rooms = rooms.map(room => ({
+            ...room,
+            guestHouseId
+          }));
         },
         error: (error) => {
           console.error('Error loading rooms:', error);
@@ -220,7 +225,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
     }
   }
 
-  configureBeds(room: RoomDTO): void {
+  configureBeds(room: Room): void {
     this.router.navigate(['/admin/rooms/bed-configuration'], { 
       queryParams: { 
         roomId: room.id,

@@ -3,14 +3,14 @@ package com.Application.GuestHouseBooking.Config;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class JwtUtil {
     private JwtConfig jwtConfig;
 
     private Key key;
-    private Set<String> tokenBlacklist = new HashSet<>();
+    private final Map<String, Date> tokenBlacklist = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -47,9 +47,20 @@ public class JwtUtil {
         }
     }
 
+    // Clean up expired tokens from blacklist every hour
+    @Scheduled(fixedRate = 3600000)
+    public void cleanupBlacklist() {
+        Date now = new Date();
+        tokenBlacklist.entrySet().removeIf(entry -> entry.getValue().before(now));
+        logger.debug("Cleaned up token blacklist");
+    }
+
     public String extractUsername(String token) {
         try {
             return extractClaim(token, Claims::getSubject);
+        } catch (ExpiredJwtException e) {
+            logger.warn("Token expired while extracting username");
+            throw e;
         } catch (Exception e) {
             logger.error("Error extracting username from token: {}", e.getMessage());
             throw e;
@@ -59,6 +70,9 @@ public class JwtUtil {
     public Date extractExpiration(String token) {
         try {
             return extractClaim(token, Claims::getExpiration);
+        } catch (ExpiredJwtException e) {
+            logger.warn("Token expired while extracting expiration");
+            throw e;
         } catch (Exception e) {
             logger.error("Error extracting expiration from token: {}", e.getMessage());
             throw e;
@@ -74,13 +88,13 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            logger.error("Token has expired: {}", e.getMessage());
+            logger.warn("Token has expired");
             throw e;
         } catch (MalformedJwtException e) {
-            logger.error("Malformed token: {}", e.getMessage());
+            logger.error("Malformed token");
             throw e;
         } catch (SignatureException e) {
-            logger.error("Invalid token signature: {}", e.getMessage());
+            logger.error("Invalid token signature");
             throw e;
         } catch (Exception e) {
             logger.error("Error parsing token: {}", e.getMessage());
@@ -98,9 +112,12 @@ public class JwtUtil {
             final Date expiration = extractExpiration(token);
             boolean isExpired = expiration.before(new Date(System.currentTimeMillis() - jwtConfig.getClockSkew()));
             if (isExpired) {
-                logger.debug("Token has expired. Expiration: {}, Current time: {}", expiration, new Date());
+                logger.debug("Token has expired. Expiration: {}", expiration);
             }
             return isExpired;
+        } catch (ExpiredJwtException e) {
+            logger.warn("Token already expired");
+            return true;
         } catch (Exception e) {
             logger.error("Error checking token expiration: {}", e.getMessage());
             return true;
@@ -139,8 +156,7 @@ public class JwtUtil {
                     .signWith(key, SignatureAlgorithm.HS256)
                     .compact();
             
-            logger.debug("Created token for subject: {}. Issued at: {}, Expires at: {}", 
-                    subject, issuedAt, expirationDate);
+            logger.debug("Created token for subject: {}. Expires at: {}", subject, expirationDate);
             return token;
         } catch (Exception e) {
             logger.error("Error creating token for subject {}: {}", subject, e.getMessage());
@@ -159,11 +175,13 @@ public class JwtUtil {
             boolean isValid = username.equals(userDetails.getUsername()) && !isTokenExpired(token);
             
             if (!isValid) {
-                logger.warn("Token validation failed for user: {}. Token expired: {}", 
-                        userDetails.getUsername(), isTokenExpired(token));
+                logger.warn("Token validation failed for user: {}", userDetails.getUsername());
             }
             
             return isValid;
+        } catch (ExpiredJwtException e) {
+            logger.warn("Token expired during validation");
+            return false;
         } catch (Exception e) {
             logger.error("Error validating token: {}", e.getMessage());
             return false;
@@ -171,11 +189,27 @@ public class JwtUtil {
     }
 
     public void invalidateToken(String token) {
-        tokenBlacklist.add(token);
-        logger.debug("Token added to blacklist");
+        try {
+            Date expiry = extractExpiration(token);
+            tokenBlacklist.put(token, expiry);
+            logger.debug("Token blacklisted until: {}", expiry);
+        } catch (ExpiredJwtException e) {
+            // If token is already expired, no need to blacklist
+            logger.debug("Attempted to blacklist already expired token");
+        } catch (Exception e) {
+            logger.error("Error invalidating token: {}", e.getMessage());
+        }
     }
 
     public boolean isTokenBlacklisted(String token) {
-        return tokenBlacklist.contains(token);
+        Date blacklistedUntil = tokenBlacklist.get(token);
+        if (blacklistedUntil != null) {
+            if (blacklistedUntil.before(new Date())) {
+                tokenBlacklist.remove(token);
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 } 

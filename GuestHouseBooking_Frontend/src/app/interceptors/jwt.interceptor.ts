@@ -11,6 +11,7 @@ import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
@@ -19,14 +20,15 @@ export class JwtInterceptor implements HttpInterceptor {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip for login, logout and refresh endpoints
+    // Skip for login, register and refresh endpoints
     if (request.url.includes('/api/auth/login') || 
-        request.url.includes('/api/auth/refresh') || 
-        request.url.includes('/api/auth/logout')) {
+        request.url.includes('/api/auth/register') || 
+        request.url.includes('/api/auth/refresh')) {
       return next.handle(request);
     }
 
@@ -52,7 +54,9 @@ export class JwtInterceptor implements HttpInterceptor {
           return this.handle401Error(request, next);
         }
         if (error.status === 403) {
-          // Clear auth data and redirect to login
+          this.snackBar.open('Session expired. Please login again.', 'Close', {
+            duration: 5000
+          });
           this.authService.logout();
           return throwError(() => error);
         }
@@ -75,7 +79,13 @@ export class JwtInterceptor implements HttpInterceptor {
         catchError((error) => {
           this.isRefreshing = false;
           this.authService.logout();
+          this.snackBar.open('Session expired. Please login again.', 'Close', {
+            duration: 5000
+          });
           return throwError(() => error);
+        }),
+        finalize(() => {
+          this.isRefreshing = false;
         })
       );
     }
@@ -94,6 +104,9 @@ export class JwtInterceptor implements HttpInterceptor {
       }),
       catchError((error) => {
         this.authService.logout();
+        this.snackBar.open('Session expired. Please login again.', 'Close', {
+          duration: 5000
+        });
         return throwError(() => error);
       })
     );

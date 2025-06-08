@@ -8,6 +8,10 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -27,6 +31,7 @@ import lombok.Data;
 @Table(name = "bed")
 @Data
 @EntityListeners(AuditingEntityListener.class)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Bed {
 
     @Id
@@ -36,6 +41,7 @@ public class Bed {
     @NotNull(message = "Room is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonBackReference
     private Room room;
 
     @NotBlank(message = "Bed number is required")
@@ -45,6 +51,10 @@ public class Bed {
     @NotNull(message = "Availability status is required")
     @Column(nullable = false)
     private Boolean isAvailable = true;  // Default to true
+
+    @NotNull(message = "Availability for booking status is required")
+    @Column(nullable = false)
+    private Boolean isAvailableForBooking = true;  // Default to true
 
     @NotNull(message = "Price per night is required")
     @DecimalMin(value = "0.01", message = "Price must be greater than 0")
@@ -69,18 +79,40 @@ public class Bed {
     @Column(nullable = false)
     private String lastModifiedBy;
 
-    // Helper method to check if bed is available for booking
-    public boolean isAvailableForBooking() {
-        return isAvailable != null && isAvailable;
-    }
-
     // Helper method to mark bed as booked
     public void markAsBooked() {
         this.isAvailable = false;
+        this.isAvailableForBooking = false;
     }
 
     // Helper method to mark bed as available
     public void markAsAvailable() {
         this.isAvailable = true;
+        this.isAvailableForBooking = true;
+    }
+
+    @Override
+    public String toString() {
+        return "Bed{" +
+                "id=" + id +
+                ", roomId=" + (room != null ? room.getId() : null) +
+                ", bedNumber='" + bedNumber + '\'' +
+                ", isAvailable=" + isAvailable +
+                ", isAvailableForBooking=" + isAvailableForBooking +
+                ", pricePerNight=" + pricePerNight +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Bed)) return false;
+        Bed bed = (Bed) o;
+        return id != null && id.equals(bed.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

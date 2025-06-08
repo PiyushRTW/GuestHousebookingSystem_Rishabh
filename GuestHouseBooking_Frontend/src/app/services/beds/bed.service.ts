@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Bed } from '../../shared/models/bed.model';
 
 export interface BedDTO {
   id?: number;
   roomId: number;
   bedNumber: string;
   isAvailable: boolean;
+  isAvailableForBooking: boolean;
   pricePerNight: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -21,14 +23,24 @@ export class BedService {
 
   constructor(private http: HttpClient) { }
 
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  }
+
   // Get all beds
   getAllBeds(): Observable<BedDTO[]> {
     return this.http.get<BedDTO[]>(this.apiUrl);
   }
 
   // Get bed by ID
-  getBedById(id: number): Observable<BedDTO> {
-    return this.http.get<BedDTO>(`${this.apiUrl}/${id}`);
+  getBedById(bedId: number): Observable<Bed> {
+    return this.http.get<Bed>(`${this.apiUrl}/${bedId}`, {
+      headers: this.getHeaders()
+    });
   }
 
   // Get beds by room ID
@@ -49,5 +61,18 @@ export class BedService {
   // Delete bed
   deleteBed(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getAvailableBeds(roomId: number, checkIn: Date, checkOut: Date): Observable<Bed[]> {
+    // Format dates to match backend's expected format (YYYY-MM-DD)
+    const params = new HttpParams()
+      .set('roomId', roomId.toString())
+      .set('checkIn', checkIn.toISOString().split('T')[0])
+      .set('checkOut', checkOut.toISOString().split('T')[0]);
+
+    return this.http.get<Bed[]>(`${this.apiUrl}/available`, {
+      headers: this.getHeaders(),
+      params: params
+    });
   }
 }

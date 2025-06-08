@@ -4,6 +4,7 @@ import { Observable, throwError, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth.service';
+import { Room } from '../../shared/models/room.model';
 
 // Room DTO matching backend entity
 export interface RoomDTO {
@@ -67,36 +68,35 @@ export class RoomService {
   }
 
   // Room operations
-  getAllRooms(): Observable<RoomDTO[]> {
-    return this.http.get<RoomDTO[]>(this.apiUrl, { headers: this.getHeaders() })
+  getAllRooms(): Observable<Room[]> {
+    return this.http.get<Room[]>(this.apiUrl, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  getRoomById(id: number): Observable<RoomDTO> {
-    return this.http.get<RoomDTO>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
+  getRoomById(id: number): Observable<Room> {
+    return this.http.get<Room>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  getRoomsByGuestHouse(guestHouseId: number): Observable<RoomDTO[]> {
-    return this.http.get<RoomDTO[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`, {
+  getRoomsByGuestHouseId(guestHouseId: number): Observable<Room[]> {
+    return this.http.get<Room[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  createRoom(room: Room): Observable<Room> {
+    return this.http.post<Room>(this.apiUrl, room, {
       headers: this.getHeaders()
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  createRoom(room: RoomDTO): Observable<RoomDTO> {
-    return this.http.post<RoomDTO>(this.apiUrl, room, {
-      headers: this.getHeaders()
-    }).pipe(catchError(this.handleError.bind(this)));
+  updateRoom(id: number, room: Room): Observable<Room> {
+    return this.http.put<Room>(`${this.apiUrl}/${id}`, room, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
-  updateRoom(id: number, room: RoomDTO): Observable<RoomDTO> {
-    return this.http.put<RoomDTO>(`${this.apiUrl}/${id}`, room, { headers: this.getHeaders() });
-  }
-
-  deleteRoom(roomId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${roomId}`, {
-      headers: this.getHeaders()
-    }).pipe(catchError(this.handleError.bind(this)));
+  deleteRoom(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   // Bed operations

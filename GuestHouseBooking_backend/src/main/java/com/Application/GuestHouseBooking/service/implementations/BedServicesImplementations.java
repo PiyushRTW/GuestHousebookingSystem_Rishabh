@@ -1,5 +1,6 @@
 package com.Application.GuestHouseBooking.service.implementations;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import com.Application.GuestHouseBooking.dtos.BedDTO;
 import com.Application.GuestHouseBooking.entity.Bed;
 import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.repository.BedRepository;
+import com.Application.GuestHouseBooking.repository.BookingRepository;
 import com.Application.GuestHouseBooking.repository.RoomRepository;
 import com.Application.GuestHouseBooking.service.BedServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +27,9 @@ public class BedServicesImplementations implements BedServices {
     private RoomRepository roomRepository; // To fetch associated Room
 
     @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
     private AuditLogServices auditLogService; // <<< Inject AuditLogService
 
     @Autowired
@@ -36,6 +41,7 @@ public class BedServicesImplementations implements BedServices {
         dto.setRoomId(bed.getRoom().getId());
         dto.setBedNumber(bed.getBedNumber());
         dto.setIsAvailable(bed.getIsAvailable());
+        dto.setIsAvailableForBooking(bed.getIsAvailableForBooking());
         dto.setPricePerNight(bed.getPricePerNight());
         dto.setCreatedAt(bed.getCreatedAt());
         dto.setUpdatedAt(bed.getUpdatedAt());
@@ -49,6 +55,7 @@ public class BedServicesImplementations implements BedServices {
         bed.setId(bedDTO.getId());
         bed.setBedNumber(bedDTO.getBedNumber());
         bed.setIsAvailable(bedDTO.getIsAvailable());
+        bed.setIsAvailableForBooking(bedDTO.getIsAvailableForBooking());
         bed.setPricePerNight(bedDTO.getPricePerNight());
 
         // Set the room
@@ -173,6 +180,17 @@ public class BedServicesImplementations implements BedServices {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public List<BedDTO> getAvailableBeds(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        List<Bed> allBedsInRoom = bedRepository.findByRoomId(roomId);
+        
+        return allBedsInRoom.stream()
+            .filter(bed -> bed.getIsAvailable()) // First check if bed is generally available
+            .filter(bed -> !bookingRepository.existsByBedIdAndDateRange(bed.getId(), checkIn, checkOut))
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
     }
 }
 

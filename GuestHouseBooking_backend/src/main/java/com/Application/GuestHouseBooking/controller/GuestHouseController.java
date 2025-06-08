@@ -6,20 +6,14 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.Application.GuestHouseBooking.dtos.GuestHouseDTO;
 import com.Application.GuestHouseBooking.service.GuestHouseServices;
 
 @RestController
 @RequestMapping("/api/guesthouses")
+@CrossOrigin(origins = "*")
 public class GuestHouseController {
 
     @Autowired
@@ -46,7 +40,31 @@ public class GuestHouseController {
             return new ResponseEntity<>(guestHouses, HttpStatus.OK);
         } catch (Exception e) {
             System.err.println("Error fetching guest houses: " + e.getMessage());
-            e.printStackTrace(); // Print stack trace for debugging
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/with-rooms")
+    public ResponseEntity<List<GuestHouseDTO>> getAllGuestHousesWithRooms() {
+        try {
+            List<GuestHouseDTO> guestHouses = guestHouseService.getAllGuestHousesWithRooms();
+            return new ResponseEntity<>(guestHouses, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Error fetching guest houses with rooms: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/with-available-beds")
+    public ResponseEntity<List<GuestHouseDTO>> getAllGuestHousesWithAvailableBeds() {
+        try {
+            List<GuestHouseDTO> guestHouses = guestHouseService.getAllGuestHousesWithAvailableBeds();
+            return new ResponseEntity<>(guestHouses, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Error fetching guest houses with available beds: " + e.getMessage());
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

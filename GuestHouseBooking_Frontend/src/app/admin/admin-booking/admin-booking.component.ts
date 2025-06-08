@@ -1,18 +1,17 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatStepper } from '@angular/material/stepper';
+import { Router } from '@angular/router';
 import { GuestHouse } from '../../shared/models/guesthouse.model';
-
-
-// If you prefer not to create room.model.ts, define it here:
-
-export interface Room {
-  id: number;
-  hotelId: number;
-  roomNumber: string;
-  bedType: 'single' | 'double' | 'suite';
-  pricePerNight: number;
-}
-
+import { Room } from '../../shared/models/room.model';
+import { Bed } from '../../shared/models/bed.model';
+import { BookingService } from 'src/app/services/bookings/booking.service';
+import { GuestHouseService } from 'src/app/services/guesthouse/guest-house.service';
+import { RoomService } from 'src/app/services/rooms/room.service';
+import { BedService } from 'src/app/services/beds/bed.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { AuthService } from 'src/app/services/auth.service';
+import { BookingStatus } from 'src/app/shared/models/booking.model';
 
 @Component({
   selector: 'app-admin-booking',
@@ -20,214 +19,264 @@ export interface Room {
   styleUrls: ['./admin-booking.component.scss']
 })
 export class AdminBookingComponent implements OnInit {
-
+  @ViewChild('stepper') stepper!: MatStepper;
+  
   bookingForm!: FormGroup;
-  hotels: GuestHouse[] = [];
-  allRooms: Room[] = []; // All mock rooms
-  availableRooms: Room[] = []; // Filtered rooms based on hotel and dates
+  guestHouses: GuestHouse[] = [];
+  availableRooms: Room[] = [];
+  availableBeds: Bed[] = [];
+  selectedBed: Bed | null = null;
+  numberOfNights: number = 0;
+  totalPrice: number = 0;
+  bookingConfirmed: boolean = false;
+  isLoading: boolean = false;
+  minDate: Date = new Date();
 
-  constructor(private fb: FormBuilder) { }
+  constructor(
+    private fb: FormBuilder,
+    private bookingService: BookingService,
+    private guestHouseService: GuestHouseService,
+    private roomService: RoomService,
+    private bedService: BedService,
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private authService: AuthService
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
-    this.loadMockData(); // Load mock hotels and rooms
+    this.loadGuestHouses();
     this.setupFormListeners();
   }
 
   initForm(): void {
     this.bookingForm = this.fb.group({
-      hotelId: [null, Validators.required],
-      checkInDate: [null, Validators.required],
-      checkOutDate: [null, Validators.required],
-      roomId: [null, Validators.required], // Will hold the ID of the selected room
-      guestName: ['', Validators.required],
-      guestEmail: ['', [Validators.required, Validators.email]],
-      guestPhone: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]] // Simple 10-digit phone validation
+      // Guest Information
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      gender: ['', Validators.required],
+      address: ['', Validators.required],
+
+      // Booking Details
+      guestHouseId: [null, Validators.required],
+      roomId: [null, Validators.required],
+      bedId: [null, Validators.required],
+      checkInDate: [null, [Validators.required, this.pastDateValidator()]],
+      checkOutDate: [null, [Validators.required, this.pastDateValidator()]],
+      purpose: [''],
     }, {
-      validators: this.dateRangeValidator // Apply cross-field validator for dates
+      validators: this.dateRangeValidator
     });
   }
 
-  // Custom validator for check-out date >= check-in date AND dates not in past
-  dateRangeValidator: ValidatorFn = (control: AbstractControl): { [key: string]: any } | null => {
-    const checkIn = control.get('checkInDate')?.value;
-    const checkOut = control.get('checkOutDate')?.value;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today to start of day
+  pastDateValidator() {
+    return (control: any) => {
+      if (!control.value) return null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const inputDate = new Date(control.value);
+      return inputDate < today ? { pastDate: true } : null;
+    };
+  }
+
+  dateRangeValidator(group: FormGroup) {
+    const checkIn = group.get('checkInDate')?.value;
+    const checkOut = group.get('checkOutDate')?.value;
+
+    if (!checkIn || !checkOut) return null;
+
+    return checkIn < checkOut ? null : { invalidDateRange: true };
+  }
+
+  loadGuestHouses(): void {
+    this.isLoading = true;
+    console.log('Loading guest houses...');
+    this.guestHouseService.getAllGuestHouses().subscribe({
+      next: (guestHouses) => {
+        this.guestHouses = guestHouses.map(gh => ({
+          id: gh.id || 0,
+          name: gh.name,
+          address: gh.address,
+          city: gh.city,
+          state: gh.state,
+          country: gh.country,
+          description: gh.description || '',
+          amenities: gh.amenities || '',
+          contactNumber: gh.contactNumber || '',
+          email: gh.email || '',
+          imageUrl: gh.imageUrl || '',
+          rooms: []
+        }));
+        console.log('Guest houses loaded:', this.guestHouses);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.handleError(error, 'Error loading guest houses');
+      }
+    });
+  }
+
+  setupFormListeners(): void {
+    // Guest House selection listener
+    this.bookingForm.get('guestHouseId')?.valueChanges.subscribe(guestHouseId => {
+      if (guestHouseId) {
+        this.loadAvailableRooms(guestHouseId);
+        this.bookingForm.patchValue({ roomId: null, bedId: null });
+      }
+    });
+
+    // Room selection listener
+    this.bookingForm.get('roomId')?.valueChanges.subscribe(roomId => {
+      if (roomId) {
+        this.loadAvailableBeds(roomId);
+        this.bookingForm.patchValue({ bedId: null });
+      }
+    });
+
+    // Bed selection listener
+    this.bookingForm.get('bedId')?.valueChanges.subscribe(bedId => {
+      if (bedId) {
+        this.loadBedDetails(bedId);
+      }
+    });
+
+    // Date change listeners
+    this.bookingForm.get('checkInDate')?.valueChanges.subscribe(() => this.updatePriceCalculation());
+    this.bookingForm.get('checkOutDate')?.valueChanges.subscribe(() => this.updatePriceCalculation());
+  }
+
+  loadAvailableRooms(guestHouseId: number): void {
+    this.isLoading = true;
+    this.roomService.getRoomsByGuestHouseId(guestHouseId).subscribe({
+      next: (rooms) => {
+        this.availableRooms = rooms.map(room => ({
+          id: room.id || 0,
+          roomNumber: room.roomNumber,
+          description: room.description || '',
+          amenities: room.amenities || '',
+          imageUrl: room.imageUrl || '',
+          guestHouse: this.guestHouses.find(gh => gh.id === guestHouseId) || this.guestHouses[0],
+          beds: []
+        }));
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.handleError(error, 'Error loading rooms');
+      }
+    });
+  }
+
+  loadAvailableBeds(roomId: number): void {
+    const checkIn = this.bookingForm.get('checkInDate')?.value;
+    const checkOut = this.bookingForm.get('checkOutDate')?.value;
 
     if (!checkIn || !checkOut) {
-      return null; // Don't validate if dates are not selected yet
+      this.snackBar.open('Please select check-in and check-out dates first', 'Close', { duration: 3000 });
+      return;
     }
 
-    if (checkIn < today) {
-      control.get('checkInDate')?.setErrors({ pastDate: true });
-    } else {
-      control.get('checkInDate')?.setErrors(null);
-    }
-
-    if (checkOut < today) {
-        control.get('checkOutDate')?.setErrors({ pastDate: true });
-    } else {
-        control.get('checkOutDate')?.setErrors(null);
-    }
-
-
-    if (checkIn && checkOut && checkIn > checkOut) {
-      return { 'invalidDateRange': true };
-    }
-
-    return null;
-  };
-
-
-  // Load mock data for hotels and rooms
-  loadMockData(): void {
-    this.hotels = [
-      {
-        id: 1,
-        name: 'Grand Hyatt',
-        address: '123 Park Ave',
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
-        description: 'Luxury hotel.',
-        amenities: 'WiFi, Pool, Gym',
-        contactNumber: '+1-234-567-8900',
-        email: 'info@grandhyatt.com',
-        imageUrl: 'assets/hotel1.jpg',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+    this.isLoading = true;
+    this.bedService.getAvailableBeds(roomId, checkIn, checkOut).subscribe({
+      next: (beds) => {
+        this.availableBeds = beds;
+        this.isLoading = false;
       },
-      {
-        id: 2,
-        name: 'Urban Oasis',
-        address: '456 Main St',
-        city: 'Chicago',
-        state: 'IL',
-        country: 'USA',
-        description: 'Modern hotel.',
-        amenities: 'WiFi, Restaurant',
-        contactNumber: '+1-234-567-8901',
-        email: 'info@urbanoasis.com',
-        imageUrl: 'assets/hotel2.jpg',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      error: (error) => {
+        this.handleError(error, 'Error loading available beds');
+      }
+    });
+  }
+
+  loadBedDetails(bedId: number): void {
+    this.bedService.getBedById(bedId).subscribe({
+      next: (bed) => {
+        this.selectedBed = bed;
+        this.updatePriceCalculation();
       },
-      {
-        id: 3,
-        name: 'Riverside Inn',
-        address: '789 River Rd',
-        city: 'Denver',
-        state: 'CO',
-        country: 'USA',
-        description: 'Cozy inn.',
-        amenities: 'WiFi, Parking',
-        contactNumber: '+1-234-567-8902',
-        email: 'info@riversideinn.com',
-        imageUrl: 'assets/hotel3.jpg',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      error: (error) => {
+        this.handleError(error, 'Error loading bed details');
       }
-    ];
-
-    this.allRooms = [
-      { id: 101, hotelId: 1, roomNumber: '101', bedType: 'double', pricePerNight: 150 },
-      { id: 102, hotelId: 1, roomNumber: '102', bedType: 'single', pricePerNight: 100 },
-      { id: 103, hotelId: 1, roomNumber: '103', bedType: 'suite', pricePerNight: 300 },
-      { id: 201, hotelId: 2, roomNumber: '201', bedType: 'double', pricePerNight: 120 },
-      { id: 202, hotelId: 2, roomNumber: '202', bedType: 'single', pricePerNight: 80 },
-      { id: 301, hotelId: 3, roomNumber: '301', bedType: 'double', pricePerNight: 90 },
-      { id: 302, hotelId: 3, roomNumber: '302', bedType: 'single', pricePerNight: 70 },
-    ];
+    });
   }
 
-  // Set up listeners for form changes to update available rooms
-  setupFormListeners(): void {
-    // Listen to changes in hotelId, checkInDate, checkOutDate
-    this.bookingForm.get('hotelId')?.valueChanges.subscribe(() => this.filterAvailableRooms());
-    this.bookingForm.get('checkInDate')?.valueChanges.subscribe(() => this.filterAvailableRooms());
-    this.bookingForm.get('checkOutDate')?.valueChanges.subscribe(() => this.filterAvailableRooms());
-  }
-
-  // Filter rooms based on selected hotel and (mock) availability
-  filterAvailableRooms(): void {
-    const selectedHotelId = this.bookingForm.get('hotelId')?.value;
-    const checkInDate = this.bookingForm.get('checkInDate')?.value;
-    const checkOutDate = this.bookingForm.get('checkOutDate')?.value;
-
-    if (selectedHotelId && checkInDate && checkOutDate && !this.bookingForm.hasError('invalidDateRange')) {
-      // For frontend mock, we'll just filter by hotel ID.
-      // A real implementation would involve complex availability checks against existing bookings.
-      this.availableRooms = this.allRooms.filter(room => room.hotelId === selectedHotelId);
-      // Reset selected room if previously selected room is no longer available
-      const currentRoomId = this.bookingForm.get('roomId')?.value;
-      if (currentRoomId && !this.availableRooms.some(room => room.id === currentRoomId)) {
-        this.bookingForm.get('roomId')?.setValue(null);
-      }
-    } else {
-      this.availableRooms = [];
-      this.bookingForm.get('roomId')?.setValue(null); // Clear room selection
+  updatePriceCalculation(): void {
+    const checkIn = this.bookingForm.get('checkInDate')?.value;
+    const checkOut = this.bookingForm.get('checkOutDate')?.value;
+    
+    if (this.selectedBed && checkIn && checkOut) {
+      const timeDiff = checkOut.getTime() - checkIn.getTime();
+      this.numberOfNights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      this.totalPrice = this.numberOfNights * this.selectedBed.pricePerNight;
     }
   }
 
-  // Handle form submission
-  bookRoom(): void {
-    // Manually trigger validation for cross-field validators before checking validity
-    this.bookingForm.updateValueAndValidity();
+  isGuestInfoValid(): boolean {
+    const guestControls = ['firstName', 'lastName', 'email', 'phoneNumber', 'gender', 'address'];
+    const isValid = guestControls.every(control => this.bookingForm.get(control)?.valid);
+    console.log('Guest info validation:', isValid);
+    if (!isValid) {
+      const invalidControls = guestControls.filter(control => !this.bookingForm.get(control)?.valid);
+      console.log('Invalid controls:', invalidControls);
+    }
+    return isValid;
+  }
 
+  isBookingValid(): boolean {
+    const bookingControls = ['guestHouseId', 'roomId', 'bedId', 'checkInDate', 'checkOutDate'];
+    return bookingControls.every(control => this.bookingForm.get(control)?.valid);
+  }
+
+  confirmBooking(): void {
     if (this.bookingForm.valid) {
-      const bookingData = this.bookingForm.value;
-      const selectedRoom = this.allRooms.find(room => room.id === bookingData.roomId);
-      const selectedHotel = this.hotels.find(hotel => hotel.id === bookingData.hotelId);
+      this.isLoading = true;
+      const currentUser = this.authService.currentUserValue;
+      
+      const bookingData = {
+        ...this.bookingForm.value,
+        userId: currentUser?.id,
+        status: BookingStatus.CONFIRMED,
+        totalPrice: this.totalPrice,
+        createdBy: currentUser?.username || 'admin'
+      };
 
-      if (selectedRoom && selectedHotel) {
-        // Calculate estimated cost (simple: price per night * number of nights)
-        const checkIn = bookingData.checkInDate;
-        const checkOut = bookingData.checkOutDate;
-        const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const totalCost = selectedRoom.pricePerNight * diffDays;
+      console.log('Sending booking data:', bookingData);
 
-        const finalBookingDetails = {
-          ...bookingData,
-          hotelName: selectedHotel.name,
-          roomNumber: selectedRoom.roomNumber,
-          bedType: selectedRoom.bedType,
-          pricePerNight: selectedRoom.pricePerNight,
-          numberOfNights: diffDays,
-          totalCost: totalCost
-        };
-
-        console.log('Admin booking details to submit:', finalBookingDetails);
-        alert(`Booking Confirmed for ${finalBookingDetails.guestName} at ${finalBookingDetails.hotelName}, Room ${finalBookingDetails.roomNumber}. Total Cost: $${finalBookingDetails.totalCost.toFixed(2)}`);
-
-        // In a real application, you would send this 'finalBookingDetails' object
-        // to your backend booking API using a service (e.g., this.bookingService.createBooking(...)).
-
-        this.bookingForm.reset(); // Reset form after successful booking
-        // Clear all validation errors and touched/pristine states
-        Object.keys(this.bookingForm.controls).forEach(key => {
-          this.bookingForm.get(key)?.setErrors(null);
-          this.bookingForm.get(key)?.markAsUntouched();
-          this.bookingForm.get(key)?.markAsPristine();
-        });
-        this.bookingForm.setErrors(null); // Clear form-level errors
-        this.filterAvailableRooms(); // Re-filter rooms as form is reset
-      }
-    } else {
-      this.bookingForm.markAllAsTouched(); // Mark all fields as touched to display validation errors
-      console.error('Form is invalid. Please check the fields.');
-      // Log specific errors for debugging
-      Object.keys(this.bookingForm.controls).forEach(key => {
-        const controlErrors = this.bookingForm.get(key)?.errors;
-        if (controlErrors != null) {
-          console.log('Control: ' + key + ', Errors: ' + JSON.stringify(controlErrors));
+      this.bookingService.createBooking(bookingData).subscribe({
+        next: (response) => {
+          this.bookingConfirmed = true;
+          this.isLoading = false;
+          this.stepper.next();
+          this.snackBar.open('Booking confirmed successfully!', 'Close', { duration: 3000 });
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Booking error:', error);
+          this.snackBar.open(`Error creating booking: ${error.error?.message || error.message || 'Unknown error'}`, 'Close', { duration: 5000 });
         }
       });
-      const formErrors = this.bookingForm.errors;
-      if (formErrors) {
-        console.log('Form-level errors:', JSON.stringify(formErrors));
-      }
     }
+  }
+
+  resetForm(): void {
+    this.bookingForm.reset();
+    this.selectedBed = null;
+    this.numberOfNights = 0;
+    this.totalPrice = 0;
+    this.bookingConfirmed = false;
+    this.stepper.reset();
+  }
+
+  private handleError(error: any, message: string) {
+    console.error(message, error);
+    if (error.status === 403 || error.status === 401) {
+      this.snackBar.open('Your session has expired. Please login again.', 'Close', { duration: 5000 });
+      localStorage.removeItem('token');
+      this.router.navigate(['/login']);
+    } else {
+      this.snackBar.open(message, 'Close', { duration: 3000 });
+    }
+    this.isLoading = false;
   }
 }

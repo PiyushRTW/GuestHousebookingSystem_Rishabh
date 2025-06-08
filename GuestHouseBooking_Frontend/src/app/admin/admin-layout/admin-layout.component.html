@@ -7,12 +7,14 @@
       <span class="admin-navigation-text">Admin Panel</span>
     </div>
     <div class="admin-header-right">
-      <span class="admin-username">{{ adminName }}</span>
-      <mat-icon>account_circle</mat-icon>
-      <button mat-raised-button color="warn" class="logout-button" (click)="logout()">
-        <mat-icon>logout</mat-icon>
-        Logout
-      </button>
+      <div class="admin-profile">
+        <img [src]="adminPhotoUrl" alt="Admin Photo" class="admin-photo">
+        <span class="admin-name">{{ adminName }}</span>
+        <button mat-flat-button color="warn" class="logout-button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Logout
+        </button>
+      </div>
     </div>
   </header>
 

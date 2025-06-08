@@ -1,104 +1,97 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
-  email = '';
-  password = '';
-  isLoading = false;
+export class LoginComponent implements OnInit {
+  loginForm!: FormGroup;
+  loading = false;
   hidePassword = true;
 
   constructor(
-    private router: Router,
+    private formBuilder: FormBuilder,
     private authService: AuthService,
+    private router: Router,
     private snackBar: MatSnackBar
   ) {
+    // Redirect if already logged in
     if (this.authService.isAuthenticated()) {
-      this.redirectBasedOnRole(this.authService.userRole);
+      const userRole = this.authService.userRole;
+      this.router.navigate([userRole === 'ADMIN' ? '/admin/dashboard' : '/user/hotels']);
     }
   }
 
-  onLogin() {
-    if (!this.email || !this.password) {
-      this.showMessage('Please enter both email and password');
-      return;
-    }
+  ngOnInit() {
+    this.loginForm = this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
 
-    if (!this.isValidEmail(this.email)) {
-      this.showMessage('Please enter a valid email address');
-      return;
-    }
+  onSubmit() {
+    if (this.loginForm.valid) {
+      this.loading = true;
+      const { email, password } = this.loginForm.value;
 
-    this.isLoading = true;
-    console.log('Attempting login with email:', this.email);
-    this.authService.login(this.email, this.password).subscribe({
-      next: (user) => {
-        console.log('Login response user:', user);
-        this.isLoading = false;
-        
-        if (user && user.role) {
-          // Check for redirect URL first
-          const redirectUrl = this.authService.redirectUrl;
-          if (redirectUrl) {
-            this.authService.redirectUrl = null;
-            this.router.navigateByUrl(redirectUrl);
-          } else {
-            this.redirectBasedOnRole(user.role);
+      this.authService.login(email, password)
+        .pipe(
+          finalize(() => {
+            this.loading = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            console.log('Login successful:', response);
+            // Navigation is handled in the auth service
+          },
+          error: (error) => {
+            console.error('Login error details:', error);
+            let errorMessage = 'Login failed. Please try again.';
+            if (error.error?.message) {
+              errorMessage = error.error.message;
+            } else if (error.message) {
+              errorMessage = error.message;
+            }
+            this.snackBar.open(errorMessage, 'Close', {
+              duration: 5000
+            });
           }
-        } else {
-          this.showMessage('Login failed: Invalid user data received');
-          console.error('Invalid user data:', user);
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Login error details:', error);
-        
-        if (error.status === 401) {
-          this.showMessage('Invalid email or password');
-        } else if (error.status === 403) {
-          this.showMessage('Access forbidden. Please check your credentials.');
-        } else {
-          this.showMessage(error.error?.message || 'An error occurred during login. Please try again.');
-        }
+        });
+    } else {
+      this.markFormGroupTouched(this.loginForm);
+    }
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
       }
     });
   }
 
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-  }
+  getErrorMessage(controlName: string): string {
+    const control = this.loginForm.get(controlName);
+    if (!control) return '';
 
-  private redirectBasedOnRole(role: string | null) {
-    console.log('Redirecting based on role:', role);
-    switch (role?.toUpperCase()) {
-      case 'ROLE_ADMIN':
-      case 'ADMIN':
-        this.router.navigate(['/admin/dashboard']);
-        break;
-      case 'ROLE_USER':
-      case 'USER':
-        this.router.navigate(['/user/hotels']);
-        break;
-      default:
-        console.warn('Unknown role:', role);
-        this.router.navigate(['/']);
+    if (control.hasError('required')) {
+      return `${controlName.charAt(0).toUpperCase() + controlName.slice(1)} is required`;
     }
-  }
-
-  private showMessage(message: string) {
-    this.snackBar.open(message, 'Close', {
-      duration: 5000,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom'
-    });
+    if (control.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+    if (control.hasError('minlength')) {
+      return `Password must be at least ${control.errors?.['minlength'].requiredLength} characters`;
+    }
+    return '';
   }
 
   onRegister() {

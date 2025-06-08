@@ -1,16 +1,33 @@
 package com.Application.GuestHouseBooking.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,7 +37,7 @@ import java.util.Set;
 @Table(name = "guest_house")
 @Data
 @EntityListeners(AuditingEntityListener.class)
-
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class GuestHouse {
 
     @Id
@@ -55,6 +72,7 @@ public class GuestHouse {
     private String imageUrl;
 
     @OneToMany(mappedBy = "guestHouse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Set<Room> rooms = new HashSet<>();
 
     @CreationTimestamp
@@ -74,4 +92,32 @@ public class GuestHouse {
     @Column(nullable = false)
     private String lastModifiedBy;
     // --- End of Auditing fields ---
+
+    @Override
+    public String toString() {
+        return "GuestHouse{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", city='" + city + '\'' +
+                ", state='" + state + '\'' +
+                ", country='" + country + '\'' +
+                ", contactNumber='" + contactNumber + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
+
+    // Override equals and hashCode to prevent circular references
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GuestHouse)) return false;
+        GuestHouse that = (GuestHouse) o;
+        return id != null && id.equals(that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

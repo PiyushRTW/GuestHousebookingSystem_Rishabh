@@ -2,10 +2,18 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { MatDialog } from '@angular/material/dialog'; // For opening the detail dialog
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { FormBuilder, FormGroup } from '@angular/forms';
 
-import { Booking } from 'src/app/shared/interfaces/Booking.interface';// Import the Booking interface
-import { BookingDetailDialogComponent } from '../booking-detail-dialog.component';// Import the detail dialog
+import { Booking, BookingStatus } from 'src/app/shared/models/booking.model';
+import { GuestHouse } from 'src/app/shared/models/guesthouse.model';
+import { Room } from 'src/app/shared/models/room.model';
+import { Bed } from 'src/app/shared/models/bed.model';
+import { BookingService } from 'src/app/services/bookings/booking.service';
+import { GuestHouseService } from 'src/app/services/guesthouse/guest-house.service';
+import { RoomService } from 'src/app/services/rooms/room.service';
+import { BookingDetailDialogComponent } from '../booking-detail-dialog.component';
 
 @Component({
   selector: 'app-reservations-list',
@@ -13,137 +21,175 @@ import { BookingDetailDialogComponent } from '../booking-detail-dialog.component
   styleUrls: ['./reservations-list.component.scss']
 })
 export class ReservationsListComponent implements OnInit {
-
   displayedColumns: string[] = [
     'id',
     'guestName',
-    'hotelName',
+    'guestHouseName',
     'roomNumber',
+    'bedNumber',
     'checkInDate',
     'checkOutDate',
     'status',
-    'totalCost',
+    'totalPrice',
     'actions'
   ];
   dataSource!: MatTableDataSource<Booking>;
+  isLoading: boolean = true;
+  filterForm: FormGroup;
+  allBookings: Booking[] = [];
+  guestHouses: GuestHouse[] = [];
+  availableRooms: Room[] = [];
+  availableBeds: Bed[] = [];
+  minDate: Date = new Date();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  // Mock Booking Data
-  private mockBookings: Booking[] = [
-    {
-      id: 'BKG001',
-      bookingDate: new Date('2024-05-10T10:00:00'),
-      guestName: 'John Doe',
-      guestEmail: 'john.doe@example.com',
-      guestPhone: '1112223333',
-      hotelId: 1,
-      hotelName: 'Grand Hyatt',
-      roomId: 101,
-      roomNumber: '101',
-      bedType: 'double',
-      checkInDate: new Date('2024-06-01'),
-      checkOutDate: new Date('2024-06-05'),
-      pricePerNight: 150,
-      numberOfNights: 4,
-      totalCost: 600,
-      status: 'Confirmed',
-      approvedBy: 'Admin User',
-      approvalDate: new Date('2024-05-11T09:30:00')
-    },
-    {
-      id: 'BKG002',
-      bookingDate: new Date('2024-05-12T14:30:00'),
-      guestName: 'Jane Smith',
-      guestEmail: 'jane.smith@example.com',
-      guestPhone: '4445556666',
-      hotelId: 2,
-      hotelName: 'Urban Oasis',
-      roomId: 201,
-      roomNumber: '201',
-      bedType: 'double',
-      checkInDate: new Date('2024-06-10'),
-      checkOutDate: new Date('2024-06-12'),
-      pricePerNight: 120,
-      numberOfNights: 2,
-      totalCost: 240,
-      status: 'Confirmed',
-      approvedBy: 'Admin User',
-      approvalDate: new Date('2024-05-12T15:00:00')
-    },
-    {
-      id: 'BKG003',
-      bookingDate: new Date('2024-05-15T09:00:00'),
-      guestName: 'Mike Johnson',
-      guestEmail: 'mike.j@example.com',
-      guestPhone: '7778889999',
-      hotelId: 1,
-      hotelName: 'Grand Hyatt',
-      roomId: 102,
-      roomNumber: '102',
-      bedType: 'single',
-      checkInDate: new Date('2024-07-01'),
-      checkOutDate: new Date('2024-07-03'),
-      pricePerNight: 100,
-      numberOfNights: 2,
-      totalCost: 200,
-      status: 'Pending' // Example of a pending booking
-    },
-    {
-        id: 'BKG004',
-        bookingDate: new Date('2024-05-16T11:00:00'),
-        guestName: 'Alice Brown',
-        guestEmail: 'alice.b@example.com',
-        guestPhone: '1231231234',
-        hotelId: 3,
-        hotelName: 'Riverside Inn',
-        roomId: 301,
-        roomNumber: '301',
-        bedType: 'double',
-        checkInDate: new Date('2024-06-20'),
-        checkOutDate: new Date('2024-06-25'),
-        pricePerNight: 90,
-        numberOfNights: 5,
-        totalCost: 450,
-        status: 'Confirmed',
-        approvedBy: 'Admin User',
-        approvalDate: new Date('2024-05-16T11:30:00')
-    },
-    {
-        id: 'BKG005',
-        bookingDate: new Date('2024-05-18T16:00:00'),
-        guestName: 'Bob White',
-        guestEmail: 'bob.w@example.com',
-        guestPhone: '9876543210',
-        hotelId: 2,
-        hotelName: 'Urban Oasis',
-        roomId: 202,
-        roomNumber: '202',
-        bedType: 'single',
-        checkInDate: new Date('2024-07-15'),
-        checkOutDate: new Date('2024-07-18'),
-        pricePerNight: 80,
-        numberOfNights: 3,
-        totalCost: 240,
-        status: 'Cancelled' // Example of a cancelled booking
-    }
-  ];
-
-  constructor(private dialog: MatDialog) { }
+  constructor(
+    private bookingService: BookingService,
+    private guestHouseService: GuestHouseService,
+    private roomService: RoomService,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private fb: FormBuilder
+  ) {
+    this.filterForm = this.fb.group({
+      guestHouse: [''],
+      room: [''],
+      bed: [''],
+      startDate: [''],
+      endDate: [''],
+      status: [BookingStatus.CONFIRMED]
+    });
+  }
 
   ngOnInit(): void {
+    this.loadGuestHouses();
     this.loadBookings();
+    this.setupFilterListener();
+  }
+
+  loadGuestHouses(): void {
+    this.guestHouseService.getAllGuestHousesWithRooms().subscribe({
+      next: (guestHouses) => {
+        this.guestHouses = guestHouses;
+      },
+      error: (error) => {
+        console.error('Error loading guest houses:', error);
+        this.snackBar.open('Error loading guest houses', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  onGuestHouseChange(): void {
+    const guestHouseId = this.filterForm.get('guestHouse')?.value;
+    if (guestHouseId) {
+      this.roomService.getRoomsByGuestHouseId(guestHouseId).subscribe({
+        next: (rooms: Room[]) => {
+          this.availableRooms = rooms;
+          this.filterForm.patchValue({ room: '', bed: '' });
+          this.availableBeds = [];
+        },
+        error: (error: any) => {
+          console.error('Error loading rooms:', error);
+          this.snackBar.open('Error loading rooms', 'Close', { duration: 3000 });
+        }
+      });
+    } else {
+      this.availableRooms = [];
+      this.availableBeds = [];
+      this.filterForm.patchValue({ room: '', bed: '' });
+    }
+    this.applyFilters();
+  }
+
+  onRoomChange(): void {
+    const roomId = this.filterForm.get('room')?.value;
+    if (roomId) {
+      const selectedRoom = this.availableRooms.find(room => room.id === roomId);
+      if (selectedRoom && selectedRoom.beds) {
+        this.availableBeds = selectedRoom.beds;
+      } else {
+        this.availableBeds = [];
+      }
+      this.filterForm.patchValue({ bed: '' });
+    } else {
+      this.availableBeds = [];
+      this.filterForm.patchValue({ bed: '' });
+    }
+    this.applyFilters();
+  }
+
+  setupFilterListener(): void {
+    this.filterForm.valueChanges.subscribe(() => {
+      this.applyFilters();
+    });
   }
 
   loadBookings(): void {
-    // In a real app, fetch from backend. For now, use mock data.
-    // Filter for 'Confirmed' bookings initially as per your request,
-    // but you might want to show all statuses or add filter options later.
-    const confirmedBookings = this.mockBookings.filter(b => b.status === 'Confirmed');
-    this.dataSource = new MatTableDataSource(confirmedBookings);
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    this.isLoading = true;
+    this.bookingService.getAllBookings(BookingStatus.CONFIRMED).subscribe({
+      next: (bookings) => {
+        this.allBookings = bookings;
+        this.dataSource = new MatTableDataSource(bookings);
+        this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading bookings:', error);
+        this.snackBar.open('Error loading bookings. Please try again.', 'Close', {
+          duration: 3000
+        });
+        this.isLoading = false;
+      }
+    });
+  }
+
+  applyFilters(): void {
+    const filters = this.filterForm.value;
+    let filteredBookings = this.allBookings;
+
+    // Filter by guest house
+    if (filters.guestHouse) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.guestHouseId === filters.guestHouse
+      );
+    }
+
+    // Filter by room
+    if (filters.room) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.roomId === filters.room
+      );
+    }
+
+    // Filter by bed
+    if (filters.bed) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.bedId === filters.bed
+      );
+    }
+
+    // Filter by date range
+    if (filters.startDate && filters.endDate) {
+      const startDate = new Date(filters.startDate);
+      const endDate = new Date(filters.endDate);
+      filteredBookings = filteredBookings.filter(booking => {
+        const checkIn = new Date(booking.checkInDate);
+        const checkOut = new Date(booking.checkOutDate);
+        return checkIn >= startDate && checkOut <= endDate;
+      });
+    }
+
+    // Filter by status
+    if (filters.status) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.status === filters.status
+      );
+    }
+
+    this.dataSource.data = filteredBookings;
   }
 
   applyFilter(event: Event) {
@@ -155,14 +201,52 @@ export class ReservationsListComponent implements OnInit {
     }
   }
 
-  /**
-   * Opens a dialog to display detailed information about a booking.
-   * @param booking The booking object to display.
-   */
   viewBookingDetails(booking: Booking): void {
     this.dialog.open(BookingDetailDialogComponent, {
-      width: '600px', // Adjust width as needed
-      data: booking // Pass the entire booking object to the dialog
+      width: '800px',
+      data: booking
     });
+  }
+
+  completeBooking(bookingId: number): void {
+    this.isLoading = true;
+    this.bookingService.completeBooking(bookingId).subscribe({
+      next: () => {
+        this.snackBar.open('Booking marked as completed successfully', 'Close', {
+          duration: 3000
+        });
+        this.loadBookings();
+      },
+      error: (error) => {
+        console.error('Error completing booking:', error);
+        this.snackBar.open('Error completing booking. Please try again.', 'Close', {
+          duration: 3000
+        });
+        this.isLoading = false;
+      }
+    });
+  }
+
+  cancelBooking(bookingId: number): void {
+    this.isLoading = true;
+    this.bookingService.cancelBooking(bookingId).subscribe({
+      next: () => {
+        this.snackBar.open('Booking cancelled successfully', 'Close', {
+          duration: 3000
+        });
+        this.loadBookings();
+      },
+      error: (error) => {
+        console.error('Error cancelling booking:', error);
+        this.snackBar.open('Error cancelling booking. Please try again.', 'Close', {
+          duration: 3000
+        });
+        this.isLoading = false;
+      }
+    });
+  }
+
+  getGuestName(booking: Booking): string {
+    return `${booking.firstName} ${booking.lastName}`;
   }
 }

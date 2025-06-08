@@ -3,10 +3,14 @@ import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms'
 import { Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { GuestHouseService, GuestHouseDTO } from 'src/app/services/guesthouse/guest-house.service';
-import { RoomService, RoomDTO } from 'src/app/services/rooms/room.service';
-import { BedService, BedDTO } from 'src/app/services/beds/bed.service';
-import { BookingService, BookingDTO } from 'src/app/services/bookings/booking.service';
+import { GuestHouseService } from 'src/app/services/guesthouse/guest-house.service';
+import { RoomService } from 'src/app/services/rooms/room.service';
+import { BedService } from 'src/app/services/beds/bed.service';
+import { BookingService } from 'src/app/services/bookings/booking.service';
+import { Booking, BookingStatus } from 'src/app/shared/models/booking.model';
+import { GuestHouse } from 'src/app/shared/models/guesthouse.model';
+import { Room } from 'src/app/shared/models/room.model';
+import { Bed } from 'src/app/shared/models/bed.model';
 
 @Component({
     selector: 'app-booking-page',
@@ -16,15 +20,15 @@ import { BookingService, BookingDTO } from 'src/app/services/bookings/booking.se
 export class BookingPageComponent implements OnInit, OnDestroy {
     bookingForm: FormGroup;
     isLoggedIn = true;
-    guestHouses: GuestHouseDTO[] = [];
-    rooms: RoomDTO[] = [];
-    beds: BedDTO[] = [];
+    guestHouses: GuestHouse[] = [];
+    rooms: Room[] = [];
+    beds: Bed[] = [];
     loading = true;
     guestHouseSubscription: Subscription;
     roomSubscription: Subscription;
     userId: number = 1; // This should come from your auth service
     today = new Date();
-    selectedRoom: RoomDTO | null = null;
+    selectedRoom: Room | null = null;
 
     constructor(
         private fb: FormBuilder,
@@ -43,7 +47,10 @@ export class BookingPageComponent implements OnInit, OnDestroy {
             bed: ['', this.bedValidator.bind(this)],
             fullName: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
-            phoneNumber: ['', Validators.required]
+            phoneNumber: ['', Validators.required],
+            gender: ['', Validators.required],
+            address: ['', Validators.required],
+            purpose: ['', Validators.required]
         });
         this.guestHouseSubscription = new Subscription();
         this.roomSubscription = new Subscription();
@@ -102,10 +109,11 @@ export class BookingPageComponent implements OnInit, OnDestroy {
 
     loadRooms(guestHouseId: number) {
         this.loading = true;
-        this.roomService.getRoomsByGuestHouse(guestHouseId).subscribe(
+        this.roomService.getRoomsByGuestHouseId(guestHouseId).subscribe(
             (rooms) => {
                 this.rooms = rooms.map(room => ({
                     ...room,
+                    guestHouseId: guestHouseId,
                     description: room.description || '',
                     amenities: room.amenities || '',
                     imageUrl: room.imageUrl || '',
@@ -128,7 +136,12 @@ export class BookingPageComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.bedService.getBedsByRoomId(roomId).subscribe(
             (beds) => {
-                this.beds = beds;
+                this.beds = beds.map(bed => ({
+                    ...bed,
+                    id: bed.id || 0,
+                    room: this.selectedRoom!,
+                    isAvailableForBooking: bed.isAvailableForBooking
+                }));
                 this.loading = false;
             },
             (error) => {
@@ -167,7 +180,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalAmount(): number {
-        const selectedBed = this.beds.find(bed => bed.id === this.bookingForm.get('bed')?.value) as BedDTO;
+        const selectedBed = this.beds.find(bed => bed.id === this.bookingForm.get('bed')?.value) as Bed;
         if (selectedBed && this.bookingForm.get('arrivalDate')?.value && this.bookingForm.get('departureDate')?.value) {
             return this.calculateNumberOfNights() * selectedBed.pricePerNight;
         }
@@ -183,13 +196,20 @@ export class BookingPageComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            const booking: BookingDTO = {
+            const booking: Booking = {
                 userId: this.userId,
                 bedId: formValue.bed,
+                firstName: formValue.fullName.split(' ')[0],
+                lastName: formValue.fullName.split(' ')[1],
+                email: formValue.email,
+                phoneNumber: formValue.phoneNumber,
+                gender: formValue.gender,
+                address: formValue.address,
                 checkInDate: formValue.arrivalDate,
                 checkOutDate: formValue.departureDate,
                 totalPrice: this.calculateTotalAmount(),
-                status: 'PENDING'
+                status: BookingStatus.PENDING,
+                purpose: formValue.purpose
             };
 
             this.loading = true;

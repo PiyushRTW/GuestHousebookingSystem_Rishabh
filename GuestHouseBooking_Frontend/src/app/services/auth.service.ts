@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
-import { map, catchError, tap, finalize } from 'rxjs/operators';
+import { map, catchError, tap, finalize, switchMap } from 'rxjs/operators';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface LoginResponse {
   token: string;
@@ -30,46 +31,87 @@ export class AuthService {
   private readonly USER_KEY = 'user';
   private refreshTokenInProgress = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private tokenRefreshTimeout: any;
   redirectUrl: string | null = null;
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {
     this.currentUserSubject = new BehaviorSubject<any>(this.getUserFromStorage());
     this.currentUser = this.currentUserSubject.asObservable();
+    this.setupTokenRefresh();
+  }
+
+  private setupTokenRefresh(): void {
+    if (this.isAuthenticated()) {
+      const token = this.getToken();
+      if (token) {
+        const tokenExp = this.jwtHelper.getTokenExpirationDate(token);
+        if (tokenExp) {
+          const timeToExpiry = tokenExp.getTime() - Date.now();
+          const refreshTime = timeToExpiry * 0.75; // Refresh at 75% of token lifetime
+          this.scheduleTokenRefresh(refreshTime);
+        }
+      }
+    }
+  }
+
+  private scheduleTokenRefresh(delay: number): void {
+    if (this.tokenRefreshTimeout) {
+      clearTimeout(this.tokenRefreshTimeout);
+    }
+    this.tokenRefreshTimeout = setTimeout(() => {
+      if (this.isAuthenticated()) {
+        this.refreshToken().subscribe();
+      }
+    }, delay);
   }
 
   login(email: string, password: string): Observable<any> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap(response => {
+          console.log('Login response:', response);
           if (response && response.token) {
             this.storeTokenAndUser(response);
+            this.setupTokenRefresh();
           }
         }),
         map(response => {
-          // After successful login, check if there's a redirect URL
+          console.log('Navigating user with role:', response.role);
           if (this.redirectUrl) {
+            console.log('Redirecting to:', this.redirectUrl);
             this.router.navigate([this.redirectUrl]);
             this.redirectUrl = null;
           } else {
-            // Default navigation based on role
-            if (response.role === 'ADMIN') {
-              this.router.navigate(['/admin/dashboard']);
-            } else {
-              this.router.navigate(['/user/dashboard']);
-            }
+            const targetRoute = response.role === 'ADMIN' ? '/admin/dashboard' : '/user/hotels';
+            console.log('Navigating to:', targetRoute);
+            this.router.navigate([targetRoute]).then(
+              success => console.log('Navigation result:', success),
+              error => console.error('Navigation error:', error)
+            );
           }
           return response;
         }),
-        catchError(this.handleError)
+        catchError(error => {
+          console.error('Auth service error:', error);
+          return throwError(() => error);
+        })
       );
   }
 
   refreshToken(): Observable<string> {
     if (this.refreshTokenInProgress) {
-      return this.refreshTokenSubject.asObservable();
+      return this.refreshTokenSubject.asObservable().pipe(
+        switchMap(token => {
+          if (token) {
+            return of(token);
+          }
+          return throwError(() => new Error('Refresh token failed'));
+        })
+      );
     }
 
     this.refreshTokenInProgress = true;
@@ -87,13 +129,18 @@ export class AuthService {
         if (response && response.token) {
           this.storeToken(response.token);
           this.refreshTokenSubject.next(response.token);
+          this.setupTokenRefresh(); // Schedule next refresh
         }
       }),
       map(response => response.token),
       catchError(error => {
         this.refreshTokenInProgress = false;
+        this.refreshTokenSubject.next(null);
         if (error.status === 401 || error.status === 403) {
           this.logout();
+          this.snackBar.open('Session expired. Please login again.', 'Close', {
+            duration: 5000
+          });
         }
         return throwError(() => error);
       }),
@@ -117,6 +164,10 @@ export class AuthService {
 
   private storeToken(token: string): void {
     localStorage.setItem(this.TOKEN_KEY, token);
+    const user = this.getUserFromStorage();
+    if (user) {
+      this.currentUserSubject.next(user);
+    }
   }
 
   getToken(): string | null {
@@ -134,7 +185,12 @@ export class AuthService {
       return false;
     }
     try {
-      return !this.jwtHelper.isTokenExpired(token);
+      const isExpired = this.jwtHelper.isTokenExpired(token);
+      if (isExpired) {
+        this.clearAuthData();
+        return false;
+      }
+      return true;
     } catch (error) {
       console.error('Error checking token expiration:', error);
       return false;
@@ -163,6 +219,9 @@ export class AuthService {
   }
 
   private clearAuthData(): void {
+    if (this.tokenRefreshTimeout) {
+      clearTimeout(this.tokenRefreshTimeout);
+    }
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
@@ -179,12 +238,24 @@ export class AuthService {
       errorMessage = error.error.message;
     }
     
+    this.snackBar.open(errorMessage, 'Close', {
+      duration: 5000
+    });
+    
     return throwError(() => new Error(errorMessage));
   }
 
   isTokenExpired(): boolean {
     const token = this.getToken();
-    return !token || this.jwtHelper.isTokenExpired(token);
+    if (!token) {
+      return true;
+    }
+    try {
+      return this.jwtHelper.isTokenExpired(token);
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+      return true;
+    }
   }
 
   get userRole(): string | null {

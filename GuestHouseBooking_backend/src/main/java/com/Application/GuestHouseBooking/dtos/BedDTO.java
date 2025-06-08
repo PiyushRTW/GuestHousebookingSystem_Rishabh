@@ -21,6 +21,9 @@ public class BedDTO {
     @NotNull(message = "Availability status is required")
     private Boolean isAvailable;
     
+    @NotNull(message = "Availability for booking status is required")
+    private Boolean isAvailableForBooking;
+    
     @NotNull(message = "Price per night is required")
     @DecimalMin(value = "0.01", message = "Price must be greater than 0")
     private BigDecimal pricePerNight;

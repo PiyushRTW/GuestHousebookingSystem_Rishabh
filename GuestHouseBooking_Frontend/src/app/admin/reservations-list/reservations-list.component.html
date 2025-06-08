@@ -1,87 +1,161 @@
 <div class="reservations-container">
-  <h2>Confirmed Reservations List</h2>
+  <h2>Confirmed Bookings</h2>
 
-  <mat-card class="reservations-card">
-    <mat-card-header>
-      <mat-card-title>All Confirmed Bookings</mat-card-title>
-      <div class="header-actions">
-        <mat-form-field appearance="outline" class="filter-input">
-          <mat-label>Filter bookings</mat-label>
-          <input matInput (keyup)="applyFilter($event)" placeholder="Ex. John Doe" #filterInput>
-          <mat-icon matSuffix>search</mat-icon>
-        </mat-form-field>
-      </div>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="mat-elevation-z2 table-container">
-        <table mat-table [dataSource]="dataSource" matSort>
+  <!-- Filter Form -->
+  <form [formGroup]="filterForm" class="filter-form">
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Guest House</mat-label>
+        <mat-select formControlName="guestHouse" (selectionChange)="onGuestHouseChange()">
+          <mat-option>All Guest Houses</mat-option>
+          <mat-option *ngFor="let gh of guestHouses" [value]="gh.id">
+            {{ gh.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Booking ID </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.id}} </td>
-          </ng-container>
+      <mat-form-field appearance="outline">
+        <mat-label>Room</mat-label>
+        <mat-select formControlName="room" (selectionChange)="onRoomChange()">
+          <mat-option>All Rooms</mat-option>
+          <mat-option *ngFor="let room of availableRooms" [value]="room.id">
+            Room {{ room.roomNumber }} ({{ room.availableBeds }} beds available)
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-          <ng-container matColumnDef="guestName">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Guest Name </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.guestName}} </td>
-          </ng-container>
+      <mat-form-field appearance="outline">
+        <mat-label>Bed</mat-label>
+        <mat-select formControlName="bed">
+          <mat-option>All Beds</mat-option>
+          <mat-option *ngFor="let bed of availableBeds" [value]="bed.id">
+            Bed {{ bed.bedNumber }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-          <ng-container matColumnDef="hotelName">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Guest House </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.hotelName}} </td>
-          </ng-container>
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="startDate" [min]="minDate">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
 
-          <ng-container matColumnDef="roomNumber">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Room </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.roomNumber}} </td>
-          </ng-container>
+      <mat-form-field appearance="outline">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" formControlName="endDate" [min]="minDate">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
 
-          <ng-container matColumnDef="checkInDate">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Check-in </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.checkInDate | date:'shortDate'}} </td>
-          </ng-container>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="CONFIRMED">Confirmed</mat-option>
+          <mat-option value="PENDING">Pending</mat-option>
+          <mat-option value="CANCELLED">Cancelled</mat-option>
+          <mat-option value="COMPLETED">Completed</mat-option>
+          <mat-option value="DENIED">Denied</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </form>
 
-          <ng-container matColumnDef="checkOutDate">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Check-out </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.checkOutDate | date:'shortDate'}} </td>
-          </ng-container>
+  <!-- Search Field -->
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Search in all fields" #input>
+  </mat-form-field>
 
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
-            <td mat-cell *matCellDef="let booking">
-              <span [ngClass]="{'status-confirmed': booking.status === 'Confirmed',
-                               'status-pending': booking.status === 'Pending',
-                               'status-cancelled': booking.status === 'Cancelled',
-                               'status-completed': booking.status === 'Completed'}">
-                {{booking.status}}
-              </span>
-            </td>
-          </ng-container>
+  <div class="loading-shade" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+  </div>
 
-          <ng-container matColumnDef="totalCost">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Total Cost </th>
-            <td mat-cell *matCellDef="let booking"> {{booking.totalCost | currency:'USD':'symbol':'1.2-2'}} </td>
-          </ng-container>
+  <div class="table-container mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource" matSort>
+      <!-- ID Column -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.id }}</td>
+      </ng-container>
 
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef> Actions </th>
-            <td mat-cell *matCellDef="let booking">
-              <button mat-icon-button color="primary" (click)="viewBookingDetails(booking)" title="View Details">
-                <mat-icon>info</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+      <!-- Guest Name Column -->
+      <ng-container matColumnDef="guestName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Guest Name</th>
+        <td mat-cell *matCellDef="let booking">{{ getGuestName(booking) }}</td>
+      </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="booking-row" (click)="viewBookingDetails(row)"></tr>
+      <!-- Guest House Column -->
+      <ng-container matColumnDef="guestHouseName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Guest House</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.guestHouseName }}</td>
+      </ng-container>
 
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" colspan="9">No confirmed bookings matching the filter "{{filterInput.value}}"</td>
-          </tr>
-        </table>
+      <!-- Room Number Column -->
+      <ng-container matColumnDef="roomNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Room</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.roomNumber }}</td>
+      </ng-container>
 
-        <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
-      </div>
-    </mat-card-content>
-  </mat-card>
+      <!-- Bed Number Column -->
+      <ng-container matColumnDef="bedNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Bed</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.bedNumber }}</td>
+      </ng-container>
+
+      <!-- Check-in Date Column -->
+      <ng-container matColumnDef="checkInDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Check-in</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.checkInDate | date:'mediumDate' }}</td>
+      </ng-container>
+
+      <!-- Check-out Date Column -->
+      <ng-container matColumnDef="checkOutDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Check-out</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.checkOutDate | date:'mediumDate' }}</td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let booking">
+          <span [ngClass]="'status-' + booking.status.toLowerCase()">{{ booking.status }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Total Price Column -->
+      <ng-container matColumnDef="totalPrice">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Total Price</th>
+        <td mat-cell *matCellDef="let booking">{{ booking.totalPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let booking">
+          <button mat-icon-button color="primary" (click)="viewBookingDetails(booking)" matTooltip="View Details">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          <button mat-icon-button color="accent" (click)="completeBooking(booking.id)" matTooltip="Mark as Completed">
+            <mat-icon>check_circle</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="cancelBooking(booking.id)" matTooltip="Cancel Booking">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <!-- Row shown when there is no matching data. -->
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" colspan="9">No data matching the filter "{{input.value}}"</td>
+      </tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page of bookings"></mat-paginator>
+  </div>
 </div>

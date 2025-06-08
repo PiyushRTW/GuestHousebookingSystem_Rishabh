@@ -4,16 +4,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.Application.GuestHouseBooking.dtos.GuestHouseDTO;
 import com.Application.GuestHouseBooking.entity.GuestHouse;
+import com.Application.GuestHouseBooking.entity.Room;
 import com.Application.GuestHouseBooking.repository.GuestHouseRepository;
 import com.Application.GuestHouseBooking.service.GuestHouseServices;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
+@Transactional
 public class GuestHouseImplementations implements GuestHouseServices {
 
     @Autowired
@@ -25,7 +32,15 @@ public class GuestHouseImplementations implements GuestHouseServices {
     @Autowired
     private ObjectMapper objectMapper; // Inject ObjectMapper for JSON conversion
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private GuestHouseDTO convertToDTO(GuestHouse guestHouse) {
+        // Ensure the entity is attached to the persistence context
+        if (!entityManager.contains(guestHouse)) {
+            guestHouse = entityManager.merge(guestHouse);
+        }
+
         GuestHouseDTO dto = new GuestHouseDTO();
         dto.setId(guestHouse.getId());
         dto.setName(guestHouse.getName());
@@ -40,6 +55,35 @@ public class GuestHouseImplementations implements GuestHouseServices {
         dto.setImageUrl(guestHouse.getImageUrl());
         dto.setCreatedAt(guestHouse.getCreatedAt());
         dto.setUpdatedAt(guestHouse.getUpdatedAt());
+        dto.setCreatedBy(guestHouse.getCreatedBy());
+        dto.setLastModifiedBy(guestHouse.getLastModifiedBy());
+
+        try {
+            // Initialize collections within transaction
+            Hibernate.initialize(guestHouse.getRooms());
+            dto.setTotalRooms(guestHouse.getRooms().size());
+
+            int totalBeds = 0;
+            int availableBeds = 0;
+
+            for (Room room : guestHouse.getRooms()) {
+                Hibernate.initialize(room.getBeds());
+                totalBeds += room.getBeds().size();
+                availableBeds += room.getBeds().stream()
+                        .filter(bed -> bed.getIsAvailableForBooking())
+                        .count();
+            }
+
+            dto.setTotalBeds(totalBeds);
+            dto.setAvailableBeds(availableBeds);
+        } catch (Exception e) {
+            // Log error but don't fail the entire operation
+            System.err.println("Error calculating room/bed counts: " + e.getMessage());
+            dto.setTotalRooms(0);
+            dto.setTotalBeds(0);
+            dto.setAvailableBeds(0);
+        }
+
         return dto;
     }
 
@@ -87,6 +131,8 @@ public class GuestHouseImplementations implements GuestHouseServices {
         return guestHouseOptional.map(this::convertToDTO);
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<GuestHouseDTO> getAllGuestHouses() {
         try {
             List<GuestHouse> guestHouses = guestHouseRepository.findAll();
@@ -95,8 +141,38 @@ public class GuestHouseImplementations implements GuestHouseServices {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Error retrieving guest houses from database: " + e.getMessage());
-            e.printStackTrace(); // Print stack trace for debugging
+            e.printStackTrace();
             throw new RuntimeException("Failed to retrieve guest houses", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GuestHouseDTO> getAllGuestHousesWithRooms() {
+        try {
+            List<GuestHouse> guestHouses = guestHouseRepository.findAllWithRooms();
+            return guestHouses.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error retrieving guest houses with rooms from database: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to retrieve guest houses with rooms", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GuestHouseDTO> getAllGuestHousesWithAvailableBeds() {
+        try {
+            List<GuestHouse> guestHouses = guestHouseRepository.findAllWithAvailableBeds();
+            return guestHouses.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error retrieving guest houses with available beds from database: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to retrieve guest houses with available beds", e);
         }
     }
 

@@ -4,7 +4,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AddEditHotelDialogComponent } from './add-edit-hotel-dialog/add-edit-hotel-dialog.component';
-import { GuestHouseService, GuestHouseDTO } from '../../services/guesthouse/guest-house.service';
+import { GuestHouseService } from '../../services/guesthouse/guest-house.service';
+import { GuestHouse } from '../../shared/models/guesthouse.model';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
@@ -14,7 +15,7 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
   styleUrls: ['./hotels.component.scss']
 })
 export class HotelsComponent implements OnInit {
-  guestHouses: GuestHouseDTO[] = [];
+  guestHouses: GuestHouse[] = [];
   loading = false;
   error: string | null = null;
   deletingIds: Set<number> = new Set();
@@ -52,7 +53,7 @@ export class HotelsComponent implements OnInit {
     });
   }
 
-  openAddEditDialog(guestHouse?: GuestHouseDTO): void {
+  openAddEditDialog(guestHouse?: GuestHouse): void {
     const dialogRef = this.dialog.open(AddEditHotelDialogComponent, {
       width: '600px',
       data: guestHouse || null
@@ -116,14 +117,9 @@ export class HotelsComponent implements OnInit {
         this.guestHouseService.deleteGuestHouse(id)
           .pipe(finalize(() => this.deletingIds.delete(id)))
           .subscribe({
-            next: (success) => {
-              if (success) {
-                this.snackBar.open('Guest house deleted successfully', 'Close', { duration: 3000 });
-                // Remove the deleted guest house from the local array
-                this.guestHouses = this.guestHouses.filter(gh => gh.id !== id);
-              } else {
-                this.snackBar.open('Failed to delete guest house', 'Close', { duration: 3000 });
-              }
+            next: () => {
+              this.snackBar.open('Guest house deleted successfully', 'Close', { duration: 3000 });
+              this.guestHouses = this.guestHouses.filter(gh => gh.id !== id);
             },
             error: (error) => {
               console.error('Error deleting guest house:', error);

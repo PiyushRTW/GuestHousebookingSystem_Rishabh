@@ -28,7 +28,7 @@ import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 
 @RestController
-@RequestMapping("/api/auth") // Base path for authentication-related endpoints
+@RequestMapping("/api/auth") // Remove 'api' from here since SecurityConfig already has it
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
@@ -46,7 +46,7 @@ public class AuthController {
 
     /**
      * Handles user login and generates a JWT upon successful authentication.
-     * Accessible at /api/auth/login
+     * Accessible at /auth/login
      */
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) {

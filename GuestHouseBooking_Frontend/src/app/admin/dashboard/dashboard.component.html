@@ -1,124 +1,204 @@
 <div class="dashboard-container">
+  <!-- Welcome Section -->
   <mat-card class="welcome-card">
-    <mat-card-title>Welcome, Admin!</mat-card-title>
     <mat-card-content>
-      <p>Here's a quick overview of your guesthouse booking system.</p>
+      <h1>Welcome to Admin Dashboard</h1>
+      <p>Manage your guest house operations efficiently</p>
     </mat-card-content>
   </mat-card>
 
-  <div class="stats-grid">
-    <mat-card class="stat-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar color="primary">hotel</mat-icon>
-        <mat-card-title>Total Hotels</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="stat-number">{{ totalHotels }}</p>
-      </mat-card-content>
-    </mat-card>
+  <!-- Overall Statistics -->
+  <div class="stats-section">
+    <h2><mat-icon>analytics</mat-icon> Overall Statistics</h2>
+    <div class="stats-grid">
+      <mat-card class="stat-card property-card">
+        <mat-card-content>
+          <mat-icon>apartment</mat-icon>
+          <div class="stat-value">{{ stats.totalGuestHouses || 0 }}</div>
+          <div class="stat-label">Guest Houses</div>
+        </mat-card-content>
+      </mat-card>
 
-    <mat-card class="stat-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar color="accent">meeting_room</mat-icon>
-        <mat-card-title>Total Rooms</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="stat-number">{{ totalRooms }}</p>
-      </mat-card-content>
-    </mat-card>
+      <mat-card class="stat-card rooms-card">
+        <mat-card-content>
+          <mat-icon>meeting_room</mat-icon>
+          <div class="stat-value">{{ stats.totalRooms || 0 }}</div>
+          <div class="stat-label">Total Rooms</div>
+        </mat-card-content>
+      </mat-card>
 
-    <mat-card class="stat-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar color="warn">book_online</mat-icon>
-        <mat-card-title>Total Bookings (All Time)</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="stat-number">{{ totalBookings }}</p>
-      </mat-card-content>
-    </mat-card>
+      <mat-card class="stat-card beds-card">
+        <mat-card-content>
+          <mat-icon>bed</mat-icon>
+          <div class="stat-value">{{ stats.totalBeds || 0 }}</div>
+          <div class="stat-label">Total Beds</div>
+        </mat-card-content>
+      </mat-card>
 
-    <mat-card class="stat-card">
-      <mat-card-header>
-        <mat-icon mat-card-avatar style="color: #4CAF50;">pending_actions</mat-icon> <mat-card-title>Pending Bookings</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="stat-number">{{ pendingBookings }}</p>
-      </mat-card-content>
-    </mat-card>
+      <mat-card class="stat-card occupied-card">
+        <mat-card-content>
+          <mat-icon>hotel</mat-icon>
+          <div class="stat-value">{{ stats.occupiedBeds || 0 }}</div>
+          <div class="stat-label">Occupied Beds</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card available-card">
+        <mat-card-content>
+          <mat-icon>check_circle</mat-icon>
+          <div class="stat-value">{{ stats.availableBeds || 0 }}</div>
+          <div class="stat-label">Available Beds</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 
-  <mat-card class="report-card">
-    <mat-card-title>Generate Period Report</mat-card-title>
-    <mat-card-content>
-      <form [formGroup]="dateRangeForm" class="date-range-form">
-        <mat-form-field appearance="outline" class="date-input">
-          <mat-label>From Date</mat-label>
-          <input matInput [matDatepicker]="pickerStart" formControlName="startDate" readonly>
-          <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
-          <mat-datepicker #pickerStart></mat-datepicker>
-          <mat-error *ngIf="dateRangeForm.get('startDate')?.hasError('required') && dateRangeForm.get('startDate')?.touched">
-            Start date is required.
-          </mat-error>
+  <!-- Booking Statistics -->
+  <div class="stats-section">
+    <h2><mat-icon>book_online</mat-icon> Booking Statistics</h2>
+    <div class="stats-grid">
+      <mat-card class="stat-card total-bookings-card">
+        <mat-card-content>
+          <mat-icon>calendar_today</mat-icon>
+          <div class="stat-value">{{ stats.totalBookings || 0 }}</div>
+          <div class="stat-label">Total Bookings</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card pending-card">
+        <mat-card-content>
+          <mat-icon>pending</mat-icon>
+          <div class="stat-value">{{ stats.pendingBookings || 0 }}</div>
+          <div class="stat-label">Pending Bookings</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card confirmed-card">
+        <mat-card-content>
+          <mat-icon>verified</mat-icon>
+          <div class="stat-value">{{ stats.confirmedBookings || 0 }}</div>
+          <div class="stat-label">Confirmed Bookings</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card completed-card">
+        <mat-card-content>
+          <mat-icon>task_alt</mat-icon>
+          <div class="stat-value">{{ stats.completedBookings || 0 }}</div>
+          <div class="stat-label">Completed Bookings</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card cancelled-card">
+        <mat-card-content>
+          <mat-icon>cancel</mat-icon>
+          <div class="stat-value">{{ stats.cancelledBookings || 0 }}</div>
+          <div class="stat-label">Cancelled Bookings</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Period Report -->
+  <div class="report-section">
+    <h2><mat-icon>assessment</mat-icon> Generate Period Report</h2>
+    <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
+      <div class="date-range-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Start Date</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="date-input">
-          <mat-label>To Date</mat-label>
-          <input matInput [matDatepicker]="pickerEnd" formControlName="endDate" readonly>
-          <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
-          <mat-datepicker #pickerEnd></mat-datepicker>
-          <mat-error *ngIf="dateRangeForm.get('endDate')?.hasError('required') && dateRangeForm.get('endDate')?.touched">
-            End date is required.
-          </mat-error>
-          <mat-error *ngIf="dateRangeForm.hasError('dateRangeInvalid') && (dateRangeForm.get('startDate')?.touched || dateRangeForm.get('endDate')?.touched)">
-            End date must be after start date.
-          </mat-error>
+        <mat-form-field appearance="outline">
+          <mat-label>End Date</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" (click)="generateReport()" [disabled]="dateRangeForm.invalid">
-          Generate Report
+        <button mat-raised-button color="primary" type="submit" [disabled]="!reportForm.valid || reportLoading">
+          <mat-icon>analytics</mat-icon>
+          {{ reportLoading ? 'Generating...' : 'Generate Report' }}
+          <mat-spinner *ngIf="reportLoading" diameter="20"></mat-spinner>
         </button>
-      </form>
-
-      <div class="report-results" *ngIf="periodRevenue > 0 || periodGuestsVisited > 0 || periodCheckIns > 0 || periodCheckOuts > 0">
-        <h3>Report for Selected Period:</h3>
-        <div class="report-grid">
-          <div class="report-item">
-            <mat-icon color="primary">paid</mat-icon>
-            <p class="report-label">Revenue</p>
-            <p class="report-value">{{ periodRevenue | currency:'USD':'symbol':'1.2-2' }}</p>
-          </div>
-          <div class="report-item">
-            <mat-icon color="accent">group</mat-icon>
-            <p class="report-label">Guests Visited</p>
-            <p class="report-value">{{ periodGuestsVisited }}</p>
-          </div>
-          <div class="report-item">
-            <mat-icon color="warn">login</mat-icon>
-            <p class="report-label">Check-ins</p>
-            <p class="report-value">{{ periodCheckIns }}</p>
-          </div>
-          <div class="report-item">
-            <mat-icon style="color: #00BCD4;">logout</mat-icon> <p class="report-label">Check-outs</p>
-            <p class="report-value">{{ periodCheckOuts }}</p>
-          </div>
-        </div>
       </div>
-       <div class="no-report-data" *ngIf="dateRangeForm.valid && periodRevenue === 0 && periodGuestsVisited === 0 && periodCheckIns === 0 && periodCheckOuts === 0">
-           <p>No data found for the selected period.</p>
-       </div>
-    </mat-card-content>
-  </mat-card>
+    </form>
 
+    <!-- Report Results -->
+    <div class="report-results" *ngIf="reportStats.totalRevenue !== undefined">
+      <div class="stats-grid">
+        <mat-card class="stat-card revenue-card">
+          <mat-card-content>
+            <mat-icon>payments</mat-icon>
+            <div class="stat-value">₹{{ reportStats.totalRevenue | number:'1.0-0' }}</div>
+            <div class="stat-label">Total Revenue</div>
+          </mat-card-content>
+        </mat-card>
 
+        <mat-card class="stat-card visits-card">
+          <mat-card-content>
+            <mat-icon>people</mat-icon>
+            <div class="stat-value">{{ reportStats.totalGuestVisits || 0 }}</div>
+            <div class="stat-label">Guest Visits</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card checkins-card">
+          <mat-card-content>
+            <mat-icon>login</mat-icon>
+            <div class="stat-value">{{ reportStats.totalCheckIns || 0 }}</div>
+            <div class="stat-label">Check-ins</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card nights-card">
+          <mat-card-content>
+            <mat-icon>nights_stay</mat-icon>
+            <div class="stat-value">{{ reportStats.totalNightsCompleted || 0 }}</div>
+            <div class="stat-label">Nights Completed</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card duration-card">
+          <mat-card-content>
+            <mat-icon>schedule</mat-icon>
+            <div class="stat-value">{{ reportStats.averageStayDuration || 0 }}</div>
+            <div class="stat-label">Avg. Stay Duration (Nights)</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card value-card">
+          <mat-card-content>
+            <mat-icon>trending_up</mat-icon>
+            <div class="stat-value">₹{{ reportStats.averageBookingValue | number:'1.0-0' }}</div>
+            <div class="stat-label">Avg. Booking Value</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
   <mat-card class="quick-links-card">
-    <mat-card-title>Quick Actions</mat-card-title>
+    <mat-card-title>
+      <mat-icon>speed</mat-icon>
+      Quick Actions
+    </mat-card-title>
     <mat-card-content class="quick-links">
       <button mat-raised-button color="primary" routerLink="/admin/hotels">
-        <mat-icon>manage_history</mat-icon> Manage Hotels
+        <mat-icon>apartment</mat-icon>
+        Manage Hotels
       </button>
       <button mat-raised-button color="accent" routerLink="/admin/rooms">
-        <mat-icon>door_front</mat-icon> Configure Rooms
+        <mat-icon>meeting_room</mat-icon>
+        Configure Rooms
       </button>
-      </mat-card-content>
+      <button mat-raised-button color="warn" routerLink="/admin/bookings">
+        <mat-icon>book_online</mat-icon>
+        View Bookings
+      </button>
+    </mat-card-content>
   </mat-card>
 </div>

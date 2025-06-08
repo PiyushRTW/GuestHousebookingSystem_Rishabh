@@ -1,10 +1,8 @@
 package com.Application.GuestHouseBooking.dtos;
 
-import jakarta.persistence.Column;
-import lombok.*;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
+
+import lombok.Data;
 
 @Data
 
@@ -22,4 +20,11 @@ public class GuestHouseDTO {
     private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String createdBy;
+    private String lastModifiedBy;
+    
+    // Additional fields for frontend display
+    private Integer totalRooms;
+    private Integer totalBeds;
+    private Integer availableBeds;
 }

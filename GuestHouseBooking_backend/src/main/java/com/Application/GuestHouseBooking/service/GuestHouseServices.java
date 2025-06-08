@@ -1,9 +1,9 @@
 package com.Application.GuestHouseBooking.service;
 
-import com.Application.GuestHouseBooking.dtos.GuestHouseDTO;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.Application.GuestHouseBooking.dtos.GuestHouseDTO;
 
 public interface GuestHouseServices {
     GuestHouseDTO createGuestHouse(GuestHouseDTO guestHouseDTO);
@@ -11,4 +11,6 @@ public interface GuestHouseServices {
     List<GuestHouseDTO> getAllGuestHouses();
     Optional<GuestHouseDTO> updateGuestHouse(Long id, GuestHouseDTO guestHouseDTO);
     boolean deleteGuestHouse(Long id);
+    List<GuestHouseDTO> getAllGuestHousesWithRooms();
+    List<GuestHouseDTO> getAllGuestHousesWithAvailableBeds();
 }
