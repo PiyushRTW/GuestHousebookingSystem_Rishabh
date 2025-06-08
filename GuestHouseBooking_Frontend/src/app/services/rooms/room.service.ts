@@ -14,8 +14,11 @@ export interface RoomDTO {
   description?: string;
   amenities?: string;
   imageUrl?: string;
+  beds?: BedDTO[];
   createdAt?: Date;
   updatedAt?: Date;
+  createdBy?: string;
+  lastModifiedBy?: string;
 }
 
 // Bed DTO matching backend entity
@@ -24,6 +27,7 @@ export interface BedDTO {
   roomId: number;
   bedNumber: string;
   isAvailable: boolean;
+  isAvailableForBooking: boolean;
   pricePerNight: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -52,17 +56,15 @@ export class RoomService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
+    console.error('An error occurred:', error);
     if (error.status === 401) {
-      // Try token refresh before logging out
+      // Handle unauthorized
       this.authService.refreshToken().pipe(
         catchError(() => {
           this.authService.logout();
           return throwError(() => new Error('Session expired. Please login again.'));
         })
       ).subscribe();
-    }
-    if (error.status === 404) {
-      return throwError(() => new Error('Resource not found'));
     }
     return throwError(() => error);
   }
@@ -79,41 +81,62 @@ export class RoomService {
   }
 
   getRoomsByGuestHouseId(guestHouseId: number): Observable<Room[]> {
-    return this.http.get<Room[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<Room[]>(`${this.apiUrl}/by-guesthouse/${guestHouseId}`, { 
+      headers: this.getHeaders() 
+    }).pipe(
+      catchError(error => {
+        if (error.status === 404) {
+          // Return empty array if no rooms found
+          return of([]);
+        }
+        return this.handleError(error);
+      })
+    );
   }
 
-  createRoom(room: Room): Observable<Room> {
+  createRoom(room: RoomDTO): Observable<Room> {
     return this.http.post<Room>(this.apiUrl, room, {
       headers: this.getHeaders()
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  updateRoom(id: number, room: Room): Observable<Room> {
-    return this.http.put<Room>(`${this.apiUrl}/${id}`, room, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError.bind(this)));
+  updateRoom(id: number, room: RoomDTO): Observable<Room> {
+    return this.http.put<Room>(`${this.apiUrl}/${id}`, room, { 
+      headers: this.getHeaders() 
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   deleteRoom(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { 
+      headers: this.getHeaders() 
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   // Bed operations
   getAllBeds(): Observable<BedDTO[]> {
-    return this.http.get<BedDTO[]>(this.bedApiUrl, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<BedDTO[]>(this.bedApiUrl, { 
+      headers: this.getHeaders() 
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   getBedById(id: number): Observable<BedDTO> {
-    return this.http.get<BedDTO>(`${this.bedApiUrl}/${id}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<BedDTO>(`${this.bedApiUrl}/${id}`, { 
+      headers: this.getHeaders() 
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   getBedsByRoom(roomId: number): Observable<BedDTO[]> {
     return this.http.get<BedDTO[]>(`${this.bedApiUrl}/by-room/${roomId}`, {
       headers: this.getHeaders()
-    }).pipe(catchError(this.handleError.bind(this)));
+    }).pipe(
+      catchError(error => {
+        if (error.status === 404) {
+          // Return empty array if no beds found
+          return of([]);
+        }
+        return this.handleError(error);
+      })
+    );
   }
 
   createBed(bed: BedDTO): Observable<BedDTO> {
@@ -123,7 +146,9 @@ export class RoomService {
   }
 
   updateBed(id: number, bed: BedDTO): Observable<BedDTO> {
-    return this.http.put<BedDTO>(`${this.bedApiUrl}/${id}`, bed, { headers: this.getHeaders() });
+    return this.http.put<BedDTO>(`${this.bedApiUrl}/${id}`, bed, { 
+      headers: this.getHeaders() 
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   deleteBed(bedId: number): Observable<void> {
@@ -134,12 +159,14 @@ export class RoomService {
 
   // Room statistics
   getRoomCount(guestHouseId: number): Observable<number> {
-    return this.http.get<number>(`${environment.apiUrl}/rooms/count/by-guesthouse/${guestHouseId}`)
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<number>(`${this.apiUrl}/count/by-guesthouse/${guestHouseId}`, {
+      headers: this.getHeaders()
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   getBedCount(roomId: number): Observable<number> {
-    return this.http.get<number>(`${environment.apiUrl}/beds/count/by-room/${roomId}`)
-      .pipe(catchError(this.handleError.bind(this)));
+    return this.http.get<number>(`${this.bedApiUrl}/count/by-room/${roomId}`, {
+      headers: this.getHeaders()
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 }

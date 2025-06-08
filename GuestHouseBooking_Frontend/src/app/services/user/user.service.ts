@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { User } from '../../shared/models/user.model';
+import { AuthService } from '../auth.service';
 
 export interface UserDTO {
   id?: number;
@@ -21,7 +24,10 @@ export interface UserDTO {
 export class UserService {
   private apiUrl = `${environment.apiUrl}/users`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
 
   register(user: UserDTO): Observable<UserDTO> {
     return this.http.post<UserDTO>(`${this.apiUrl}/register`, user);
@@ -37,5 +43,43 @@ export class UserService {
 
   updateUserProfile(id: number, user: UserDTO): Observable<UserDTO> {
     return this.http.put<UserDTO>(`${this.apiUrl}/${id}`, user);
+  }
+
+  getCurrentUser(): Observable<User> {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      return throwError(() => new Error('No user logged in'));
+    }
+    return this.http.get<User>(`${this.apiUrl}/${currentUser.id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateUser(userData: Partial<User>): Observable<User> {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      return throwError(() => new Error('No user logged in'));
+    }
+    
+    return this.http.put<User>(`${this.apiUrl}/${currentUser.id}`, userData).pipe(
+      tap(updatedUser => {
+        // Update the stored user data
+        this.authService.updateStoredUserData(updatedUser);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  private handleError(error: any) {
+    let errorMessage = 'An error occurred';
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = error.error.message;
+    } else {
+      // Server-side error
+      errorMessage = error.error?.message || `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+    console.error(errorMessage);
+    return throwError(() => new Error(errorMessage));
   }
 }

@@ -85,6 +85,8 @@ public class AuthController {
             response.put("email", user.getEmail());
             response.put("role", user.getRole().name());
             response.put("id", user.getId());
+            response.put("firstName", user.getFirstName());
+            response.put("lastName", user.getLastName());
 
             logger.info("Successful login for email: {}", authRequest.getEmail());
             return ResponseEntity.ok(response);

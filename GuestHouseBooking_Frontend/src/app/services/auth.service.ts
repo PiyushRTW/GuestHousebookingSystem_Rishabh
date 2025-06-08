@@ -13,6 +13,8 @@ interface LoginResponse {
   email: string;
   role: string;
   id: number;
+  firstName?: string;
+  lastName?: string;
 }
 
 interface TokenResponse {
@@ -81,7 +83,14 @@ export class AuthService {
         }),
         map(response => {
           console.log('Navigating user with role:', response.role);
-          if (this.redirectUrl) {
+          // Check for pending booking
+          const pendingBookingId = sessionStorage.getItem('pendingBookingGuestHouseId');
+          if (pendingBookingId && response.role === 'USER') {
+            sessionStorage.removeItem('pendingBookingGuestHouseId');
+            this.router.navigate(['/user/booking-page'], {
+              queryParams: { guestHouseId: pendingBookingId }
+            });
+          } else if (this.redirectUrl) {
             console.log('Redirecting to:', this.redirectUrl);
             this.router.navigate([this.redirectUrl]);
             this.redirectUrl = null;
@@ -156,7 +165,9 @@ export class AuthService {
       id: response.id,
       username: response.username,
       email: response.email,
-      role: response.role
+      role: response.role,
+      firstName: response.firstName,
+      lastName: response.lastName
     };
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
@@ -265,5 +276,14 @@ export class AuthService {
 
   public get currentUserValue() {
     return this.currentUserSubject.value;
+  }
+
+  updateStoredUserData(updatedUser: any): void {
+    const currentUser = this.currentUserSubject.value;
+    if (currentUser) {
+      const updatedUserData = { ...currentUser, ...updatedUser };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
+      this.currentUserSubject.next(updatedUserData);
+    }
   }
 }

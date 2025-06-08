@@ -153,6 +153,7 @@ export class BedConfigurationComponent implements OnInit, OnDestroy {
         roomId: this.roomId,
         bedNumber: bedNumber,
         isAvailable: true,
+        isAvailableForBooking: true,
         // Ensure price is a number with 2 decimal places
         pricePerNight: parseFloat(Number(pricePerNight).toFixed(2)),
         createdBy: this.authService.currentUserValue?.username || 'admin',

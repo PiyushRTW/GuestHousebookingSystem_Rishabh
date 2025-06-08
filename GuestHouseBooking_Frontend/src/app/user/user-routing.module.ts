@@ -15,9 +15,9 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'hotels', pathMatch: 'full' },
       { path: 'hotels', component: HotelsComponent },
-      { path: 'booking/:id', component: BookingPageComponent },
+      { path: 'booking-page', component: BookingPageComponent },
       { path: 'my-bookings', component: MyBookingsComponent },
-      { path: 'profile', component: UserDetailsComponent }
+      { path: 'user-details', component: UserDetailsComponent }
     ]
   }
 ];

@@ -1,14 +1,22 @@
 package com.Application.GuestHouseBooking.controller;
 
-import com.Application.GuestHouseBooking.dtos.UserDTO;
-import com.Application.GuestHouseBooking.service.implementations.UserServiceImplementations;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import com.Application.GuestHouseBooking.dtos.UserDTO;
+import com.Application.GuestHouseBooking.service.implementations.UserServiceImplementations;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,15 +24,15 @@ public class UserController {
     @Autowired
     private UserServiceImplementations userService;
 
-    @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
+    @PostMapping("/register")
+    public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO userDTO) {
         try {
             UserDTO createdUser = userService.createUser(userDTO);
             return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             System.err.println("Error creating user: " + e.getMessage());
-            // For duplicate username/email, a 409 Conflict might be more appropriate
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // Or BAD_REQUEST, depending on specific error
+            // For duplicate username/email, return 409 Conflict
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
     }
 
@@ -49,8 +57,7 @@ public class UserController {
                     .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (RuntimeException e) {
             System.err.println("Error updating user: " + e.getMessage());
-            // For duplicate username/email, a 409 Conflict might be more appropriate
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // Or BAD_REQUEST
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
     }
 

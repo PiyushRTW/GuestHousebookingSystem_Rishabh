@@ -43,8 +43,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // Skip filter for authentication endpoints
-        if (request.getServletPath().contains("/api/auth/")) {
+        final String requestPath = request.getServletPath();
+
+        // Skip filter for authentication endpoints and terms-and-conditions
+        if (requestPath.contains("/api/auth/") || 
+            requestPath.contains("/terms-and-conditions")) {
             chain.doFilter(request, response);
             return;
         }

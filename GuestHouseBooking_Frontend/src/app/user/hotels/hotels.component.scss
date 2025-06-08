@@ -25,47 +25,240 @@
 }
 
 .guest-houses-container {
-  padding: 20px;
-  
-  .loading-state,
-  .error-state,
-  .no-data-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    text-align: center;
-    
-    mat-icon {
-      font-size: 48px;
-      height: 48px;
-      width: 48px;
-      margin-bottom: 16px;
-    }
+  padding: 2rem;
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 64px);
+  background-color: #f8f9fa;
 
-    p {
-      margin: 16px 0;
-      color: rgba(0, 0, 0, 0.6);
+  h1 {
+    margin-bottom: 2rem;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 2rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+
+    &:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 4px;
+      background-color: #1976d2;
+      border-radius: 2px;
+    }
+  }
+}
+
+.loading-state,
+.error-state,
+.no-data-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin: 2rem auto;
+  max-width: 600px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    color: #1976d2;
+  }
+
+  p {
+    margin: 1rem 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+  }
+
+  button {
+    margin-top: 1.5rem;
+    padding: 0 2rem;
+    height: 42px;
+    border-radius: 21px;
+    font-weight: 500;
+  }
+}
+
+.guest-houses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.guest-house-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  position: relative;
+  z-index: 1;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .mat-mdc-card-image {
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
     }
   }
 
-  .guest-houses-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    
-    .guest-house-card {
-      height: 100%;
+  .mat-mdc-card-header {
+    padding: 1.5rem 1.5rem 0.5rem;
+
+    .mat-mdc-card-title {
+      font-size: 1.4rem;
+      margin-bottom: 0.75rem;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    .mat-mdc-card-subtitle {
       display: flex;
-      flex-direction: column;
-      
-      mat-card-content {
-        flex-grow: 1;
+      align-items: center;
+      gap: 0.5rem;
+      color: #5c6a7a;
+      font-size: 1rem;
+
+      mat-icon {
+        color: #1976d2;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  .mat-mdc-card-content {
+    flex-grow: 1;
+    padding: 0.5rem 1.5rem 1.5rem;
+
+    .description {
+      margin-bottom: 1.5rem;
+      color: #5c6a7a;
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #2c3e50;
+
+        mat-icon {
+          color: #1976d2;
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        span {
+          font-weight: 500;
+        }
+      }
+    }
+
+    .amenities {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+
+      h4 {
+        margin: 0 0 0.75rem;
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1.1rem;
       }
 
-      mat-card-actions {
-        padding: 16px;
+      p {
+        color: #5c6a7a;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin: 0;
+      }
+    }
+
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #5c6a7a;
+        font-size: 0.95rem;
+
+        mat-icon {
+          color: #1976d2;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+  }
+
+  .mat-mdc-card-actions {
+    padding: 1.5rem;
+    margin: 0;
+    border-top: 1px solid #eef2f7;
+
+    button {
+      width: 100%;
+      height: 42px;
+      border-radius: 21px;
+      font-weight: 500;
+      font-size: 1rem;
+      transition: transform 0.2s ease;
+
+      &:not(:disabled):hover {
+        transform: translateY(-2px);
+      }
+
+      &:disabled {
+        background-color: #e9ecef;
+        color: #6c757d;
       }
     }
   }

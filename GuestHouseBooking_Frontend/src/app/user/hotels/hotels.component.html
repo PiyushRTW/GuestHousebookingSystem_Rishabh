@@ -20,19 +20,53 @@
   <!-- Guest Houses Grid -->
   <div *ngIf="!loading && !error" class="guest-houses-grid">
     <mat-card *ngFor="let guestHouse of guestHouses" class="guest-house-card">
+      <img mat-card-image [src]="guestHouse.imageUrl || 'assets/images/default-guesthouse.jpg'" [alt]="guestHouse.name">
+      
       <mat-card-header>
         <mat-card-title>{{ guestHouse.name }}</mat-card-title>
-        <mat-card-subtitle>{{ guestHouse.address }}</mat-card-subtitle>
+        <mat-card-subtitle>
+          <mat-icon>location_on</mat-icon>
+          {{ guestHouse.address }}
+        </mat-card-subtitle>
       </mat-card-header>
       
       <mat-card-content>
-        <p *ngIf="guestHouse.description">{{ guestHouse.description }}</p>
-        <p>Total Rooms: {{ guestHouse.totalRooms }}</p>
+        <p *ngIf="guestHouse.description" class="description">{{ guestHouse.description }}</p>
+        
+        <div class="stats">
+          <div class="stat-item">
+            <mat-icon>hotel</mat-icon>
+            <span>{{ guestHouse.totalRooms }} Rooms</span>
+          </div>
+          <div class="stat-item">
+            <mat-icon>single_bed</mat-icon>
+            <span>{{ guestHouse.availableBeds }} Available Beds</span>
+          </div>
+        </div>
+
+        <div class="amenities" *ngIf="guestHouse.amenities">
+          <h4>Amenities</h4>
+          <p>{{ guestHouse.amenities }}</p>
+        </div>
+
+        <div class="contact-info">
+          <div *ngIf="guestHouse.contactNumber" class="contact-item">
+            <mat-icon>phone</mat-icon>
+            <span>{{ guestHouse.contactNumber }}</span>
+          </div>
+          <div *ngIf="guestHouse.email" class="contact-item">
+            <mat-icon>email</mat-icon>
+            <span>{{ guestHouse.email }}</span>
+          </div>
+        </div>
       </mat-card-content>
 
       <mat-card-actions align="end">
-        <button mat-raised-button color="primary" (click)="onGuestHouseSelect(guestHouse)">
-          View Availability & Book
+        <button mat-raised-button 
+                [color]="guestHouse.availableBeds > 0 ? 'primary' : 'warn'"
+                [disabled]="guestHouse.availableBeds === 0"
+                (click)="onGuestHouseSelect(guestHouse)">
+          {{ guestHouse.availableBeds > 0 ? 'Book Now' : 'No Beds Available' }}
         </button>
       </mat-card-actions>
     </mat-card>

@@ -24,7 +24,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RegistrationComponent } from './registration/registration.component';
+import { MatStepperModule } from '@angular/material/stepper';
+
 
 @NgModule({
   declarations: [
@@ -32,8 +33,7 @@ import { RegistrationComponent } from './registration/registration.component';
     UserLayoutComponent,
     BookingPageComponent,
     MyBookingsComponent,
-    UserDetailsComponent,
-    RegistrationComponent
+    UserDetailsComponent
   ],
   imports: [
     CommonModule,
@@ -56,7 +56,8 @@ import { RegistrationComponent } from './registration/registration.component';
     MatSidenavModule,
     MatListModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatStepperModule
   ]
 })
 export class UserModule { }

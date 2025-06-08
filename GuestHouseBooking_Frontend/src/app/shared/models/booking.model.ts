@@ -1,5 +1,7 @@
 import { Bed } from './bed.model';
 import { User } from './user.model';
+import { Room } from './room.model';
+import { GuestHouse } from './guesthouse.model';
 
 export enum BookingStatus {
     PENDING = 'PENDING',
@@ -10,24 +12,30 @@ export enum BookingStatus {
 }
 
 export interface Booking {
-    id?: number;
-    userId?: number;
-    bedId?: number;
-    roomId?: number;
-    guestHouseId?: number;
+    id: number;
+    userId: number;
+    guestHouseId: number;
+    roomId: number;
+    bedId: number;
+    checkInDate: Date;
+    checkOutDate: Date;
+    totalPrice: number;
+    numberOfNights: number;
+    status: BookingStatus;
+    purpose?: string;
+    
+    // Populated relations
     user?: User;
+    guestHouse?: GuestHouse;
+    room?: Room;
     bed?: Bed;
+
     firstName: string;
     lastName: string;
     email: string;
     phoneNumber: string;
     gender: string;
     address: string;
-    checkInDate: Date;
-    checkOutDate: Date;
-    status: BookingStatus;
-    totalPrice: number;
-    purpose?: string;
     createdAt?: Date;
     updatedAt?: Date;
     createdBy?: string;

@@ -68,9 +68,6 @@ public class BookingController {
         } else {
             bookings = bookingService.getBookingsByUserId(userId);
         }
-        if (bookings.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
         return new ResponseEntity<>(bookings, HttpStatus.OK);
     }
 

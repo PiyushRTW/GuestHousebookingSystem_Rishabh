@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth.service';
 import { Booking, BookingStatus } from '../../shared/models/booking.model';
@@ -60,9 +60,21 @@ export class BookingService {
       .pipe(catchError(this.handleError));
   }
 
-  getBookingsByUserId(userId: number): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.apiUrl}/by-user/${userId}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+  getUserBookings(status?: BookingStatus): Observable<Booking[]> {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) {
+      return throwError(() => new Error('No user logged in'));
+    }
+
+    let url = `${this.apiUrl}/by-user/${currentUser.id}`;
+    if (status) {
+      url += `?status=${status}`;
+    }
+
+    return this.http.get<Booking[]>(url).pipe(
+      map(bookings => bookings || []),
+      catchError(this.handleError)
+    );
   }
 
   getBookingsByBedId(bedId: number): Observable<Booking[]> {
@@ -97,8 +109,9 @@ export class BookingService {
     }, { headers: this.getHeaders() }).pipe(catchError(this.handleError));
   }
 
-  cancelBooking(bookingId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${bookingId}/cancel`, {});
+  cancelBooking(bookingId: number): Observable<Booking> {
+    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/cancel`, {}, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError));
   }
 
   completeBooking(bookingId: number): Observable<any> {

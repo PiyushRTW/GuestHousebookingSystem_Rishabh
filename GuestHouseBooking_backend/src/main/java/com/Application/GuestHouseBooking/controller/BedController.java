@@ -1,19 +1,30 @@
 package com.Application.GuestHouseBooking.controller;
 
-import com.Application.GuestHouseBooking.dtos.BedDTO;
-import com.Application.GuestHouseBooking.service.implementations.BedServicesImplementations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.Application.GuestHouseBooking.dtos.BedDTO;
+import com.Application.GuestHouseBooking.service.implementations.BedServicesImplementations;
+
 @RestController
 @RequestMapping("/api/beds")
+@CrossOrigin(origins = "*")
 public class BedController {
 
     @Autowired
@@ -26,7 +37,7 @@ public class BedController {
             return new ResponseEntity<>(createdBed, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             System.err.println("Error creating bed: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Room not found or invalid data
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -45,11 +56,15 @@ public class BedController {
 
     @GetMapping("/by-room/{roomId}")
     public ResponseEntity<List<BedDTO>> getBedsByRoomId(@PathVariable Long roomId) {
-        List<BedDTO> beds = bedService.getBedsByRoomId(roomId);
-        if (beds.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // If room doesn't exist or no beds
+        try {
+            List<BedDTO> beds = bedService.getBedsByRoomId(roomId);
+            // Return empty list instead of 404 when no beds found
+            return new ResponseEntity<>(beds, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Error fetching beds: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(beds, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -60,7 +75,7 @@ public class BedController {
                     .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (RuntimeException e) {
             System.err.println("Error updating bed: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Room not found or invalid data
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 

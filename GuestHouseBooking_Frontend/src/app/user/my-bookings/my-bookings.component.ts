@@ -1,88 +1,115 @@
-import { Component, OnInit } from '@angular/core';
-
-interface Booking {
-  bookingId: string;
-  hotelName: string;
-  roomNumber: number;
-  bedName: string;
-  arrivalDate: Date;
-  departureDate: Date;
-  status: 'Confirmed' | 'Pending' | 'Cancelled';
-  totalCost: number;
-}
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { BookingService } from 'src/app/services/bookings/booking.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { Booking, BookingStatus } from 'src/app/shared/models/booking.model';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-my-bookings',
   templateUrl: './my-bookings.component.html',
   styleUrls: ['./my-bookings.component.scss']
 })
-export class MyBookingsComponent implements OnInit {
+export class MyBookingsComponent implements OnInit, OnDestroy {
   userBookings: Booking[] = [];
-  isLoading: boolean = true; // To show a loading indicator
+  isLoading: boolean = true;
+  error: string | null = null;
+  private destroy$ = new Subject<void>();
 
-  constructor() { }
+  constructor(
+    private bookingService: BookingService,
+    private snackBar: MatSnackBar,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.loadUserBookings();
   }
 
-  loadUserBookings() {
-    // In a real application, you would call a service here to fetch
-    // bookings for the currently logged-in user.
-    // this.bookingService.getUserBookings().subscribe(data => {
-    //   this.userBookings = data;
-    //   this.isLoading = false;
-    // });
-
-    // Placeholder static data for now:
-    setTimeout(() => { // Simulate API call delay
-      this.userBookings = [
-        {
-          bookingId: 'BK1001',
-          hotelName: 'The Grand Majestic Hotel',
-          roomNumber: 101,
-          bedName: 'Bed 1',
-          arrivalDate: new Date('2025-06-15'),
-          departureDate: new Date('2025-06-18'),
-          status: 'Confirmed',
-          totalCost: 4500
-        },
-        {
-          bookingId: 'BK1002',
-          hotelName: 'Comfort Inn Sayaji',
-          roomNumber: 205,
-          bedName: 'Bed A',
-          arrivalDate: new Date('2025-07-01'),
-          departureDate: new Date('2025-07-05'),
-          status: 'Pending',
-          totalCost: 3200
-        },
-        {
-          bookingId: 'BK1003',
-          hotelName: 'Hotel Royal Orchid Central',
-          roomNumber: 310,
-          bedName: 'Queen Bed',
-          arrivalDate: new Date('2025-04-10'),
-          departureDate: new Date('2025-04-12'),
-          status: 'Cancelled',
-          totalCost: 1800
-        }
-        // Add more booking objects as needed
-      ];
-      this.isLoading = false;
-    }, 1500); // Simulate 1.5 seconds delay
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  getStatusClass(status: 'Confirmed' | 'Pending' | 'Cancelled') {
+  loadUserBookings() {
+    this.isLoading = true;
+    this.error = null;
+
+    this.bookingService.getUserBookings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (bookings) => {
+          this.userBookings = bookings;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.error = error.message;
+          this.isLoading = false;
+          if (error.message !== 'No bookings found') {
+            this.snackBar.open(error.message, 'Close', {
+              duration: 5000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom'
+            });
+          }
+        }
+      });
+  }
+
+  cancelBooking(bookingId: number) {
+    this.bookingService.cancelBooking(bookingId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Booking cancelled successfully', 'Close', {
+            duration: 3000
+          });
+          this.loadUserBookings();
+        },
+        error: (error) => {
+          this.snackBar.open(error.message || 'Error cancelling booking', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+  }
+
+  getStatusClass(status: BookingStatus): string {
     switch (status) {
-      case 'Confirmed':
+      case BookingStatus.CONFIRMED:
         return 'status-confirmed';
-      case 'Pending':
+      case BookingStatus.PENDING:
         return 'status-pending';
-      case 'Cancelled':
+      case BookingStatus.CANCELED:
         return 'status-cancelled';
+      case BookingStatus.COMPLETED:
+        return 'status-completed';
+      case BookingStatus.DENIED:
+        return 'status-denied';
       default:
         return '';
     }
+  }
+
+  getStatusIcon(status: BookingStatus): string {
+    switch (status) {
+      case BookingStatus.CONFIRMED:
+        return 'check_circle';
+      case BookingStatus.PENDING:
+        return 'pending';
+      case BookingStatus.CANCELED:
+        return 'cancel';
+      case BookingStatus.COMPLETED:
+        return 'task_alt';
+      case BookingStatus.DENIED:
+        return 'block';
+      default:
+        return 'help';
+    }
+  }
+
+  makeNewBooking() {
+    this.router.navigate(['/user/hotels']);
   }
 }

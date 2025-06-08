@@ -1,85 +1,120 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-interface UserProfile {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  address: string;
-}
+import { UserService } from 'src/app/services/user/user.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { User } from 'src/app/shared/models/user.model';
 
 @Component({
   selector: 'app-user-details',
   templateUrl: './user-details.component.html',
   styleUrls: ['./user-details.component.scss']
 })
-export class UserDetailsComponent implements OnInit {
-  userProfileForm: FormGroup;
-  isLoading: boolean = true;
-  isEditing: boolean = false;
-  initialProfileData: UserProfile | null = null; // To store original data for comparison
+export class UserDetailsComponent implements OnInit, OnDestroy {
+  userForm: FormGroup;
+  isLoading = false;
+  isEditing = false;
+  error: string | null = null;
+  private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
-    this.userProfileForm = this.fb.group({
-      fullName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      phoneNumber: ['', Validators.required],
-      address: ['']
-      // Add form controls for other editable fields
+  constructor(
+    private fb: FormBuilder,
+    private userService: UserService,
+    private snackBar: MatSnackBar
+  ) {
+    this.userForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
+      email: ['', [Validators.required, Validators.email]]
     });
+    this.userForm.disable(); // Initially disable the form
   }
 
   ngOnInit(): void {
-    this.loadUserProfile();
+    this.loadUserDetails();
   }
 
-  loadUserProfile() {
-    // In a real application, you would call a service here to fetch
-    // the logged-in user's profile data.
-    // this.userService.getUserProfile().subscribe(data => {
-    //   this.initialProfileData = data;
-    //   this.userProfileForm.patchValue(data);
-    //   this.isLoading = false;
-    // });
-
-    // Placeholder static data for now:
-    setTimeout(() => {
-      this.initialProfileData = {
-        fullName: 'John Doe',
-        email: 'john.doe@example.com',
-        phoneNumber: '9876543210',
-        address: '123 Main Street, Anytown'
-      };
-      this.userProfileForm.patchValue(this.initialProfileData);
-      this.isLoading = false;
-    }, 1000);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  enableEdit() {
-    this.isEditing = true;
+  loadUserDetails(): void {
+    this.isLoading = true;
+    this.error = null;
+
+    this.userService.getCurrentUser()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (user: User) => {
+          this.userForm.patchValue({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneNumber: user.phoneNumber,
+            email: user.email
+          });
+          this.isLoading = false;
+        },
+        error: (error) => {
+          this.error = error.message;
+          this.isLoading = false;
+          this.snackBar.open('Error loading user details', 'Close', {
+            duration: 3000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          });
+        }
+      });
   }
 
-  cancelEdit() {
-    this.isEditing = false;
-    // Revert the form to the initial data
-    if (this.initialProfileData) {
-      this.userProfileForm.patchValue(this.initialProfileData);
-    }
-  }
-
-  saveChanges() {
-    if (this.userProfileForm.valid) {
-      this.isEditing = false;
-      const updatedProfileData = this.userProfileForm.value;
-      console.log('Updated Profile Data:', updatedProfileData);
-      // In a real application, you would call a service here to update
-      // the user's profile data on the backend.
-      // this.userService.updateUserProfile(updatedProfileData).subscribe(response => {
-      //   // Handle success feedback
-      // });
+  toggleEdit(): void {
+    this.isEditing = !this.isEditing;
+    if (this.isEditing) {
+      this.userForm.enable();
     } else {
-      // Display validation errors
-      alert('Please ensure all required fields are filled correctly.');
+      this.userForm.disable();
     }
+  }
+
+  onSubmit(): void {
+    if (this.userForm.valid) {
+      this.isLoading = true;
+      const userData = this.userForm.value;
+
+      this.userService.updateUser(userData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.isLoading = false;
+            this.isEditing = false;
+            this.userForm.disable();
+            this.snackBar.open('Profile updated successfully', 'Close', {
+              duration: 3000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom'
+            });
+          },
+          error: (error) => {
+            this.isLoading = false;
+            this.snackBar.open(error.message || 'Error updating profile', 'Close', {
+              duration: 3000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom'
+            });
+          }
+        });
+    } else {
+      this.snackBar.open('Please fill in all required fields correctly', 'Close', {
+        duration: 3000
+      });
+    }
+  }
+
+  cancelEdit(): void {
+    this.isEditing = false;
+    this.userForm.disable();
+    this.loadUserDetails(); // Reload original data
   }
 }

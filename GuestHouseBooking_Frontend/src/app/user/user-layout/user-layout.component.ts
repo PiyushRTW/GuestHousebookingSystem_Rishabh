@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-user-layout',
@@ -26,5 +27,10 @@ export class UserLayoutComponent {
 
   logout() {
     this.authService.logout();
+  }
+
+  openTermsAndConditions() {
+    // Open the PDF in the current tab
+    window.location.href = `${environment.apiUrl}/terms-and-conditions`;
   }
 }

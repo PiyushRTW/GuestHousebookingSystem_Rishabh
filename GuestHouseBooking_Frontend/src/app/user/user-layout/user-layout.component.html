@@ -4,13 +4,16 @@
       <button mat-icon-button class="menu-toggle" (click)="toggleSidebar()">
         <mat-icon>{{ isSidebarOpen ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
-      <div class="app-logo">GuestHouse Booking</div>
+      <div class="app-title">
+        <span>GuestHouse Booking System</span>
+      </div>
     </div>
     <div class="user-info">
+      <mat-icon class="user-icon">account_circle</mat-icon>
       <span class="username">{{ username }}</span>
       <button mat-raised-button color="warn" class="logout-button" (click)="logout()">
         <mat-icon>logout</mat-icon>
-        Logout
+        <span>Logout</span>
       </button>
     </div>
   </header>
@@ -30,6 +33,12 @@
         <span>User Details</span>
       </mat-list-item>
     </mat-nav-list>
+    <div class="terms-button-container">
+      <button mat-button class="terms-button" (click)="openTermsAndConditions()">
+        <mat-icon>description</mat-icon>
+        <span>Terms & Conditions</span>
+      </button>
+    </div>
   </aside>
 
   <main class="user-content" [class.sidebar-closed]="!isSidebarOpen">

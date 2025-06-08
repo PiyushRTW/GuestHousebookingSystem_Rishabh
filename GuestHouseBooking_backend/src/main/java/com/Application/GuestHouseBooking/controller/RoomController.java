@@ -1,18 +1,27 @@
 package com.Application.GuestHouseBooking.controller;
 
-import com.Application.GuestHouseBooking.dtos.RoomDTO;
-import com.Application.GuestHouseBooking.service.implementations.RoomServiceImplementations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.Application.GuestHouseBooking.dtos.RoomDTO;
+import com.Application.GuestHouseBooking.service.implementations.RoomServiceImplementations;
+
 @RestController
 @RequestMapping("/api/rooms")
-
+@CrossOrigin(origins = "*")
 public class RoomController {
     @Autowired
     private RoomServiceImplementations roomService;
@@ -24,7 +33,7 @@ public class RoomController {
             return new ResponseEntity<>(createdRoom, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             System.err.println("Error creating room: " + e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // GuestHouse not found or invalid data
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -43,11 +52,14 @@ public class RoomController {
 
     @GetMapping("/by-guesthouse/{guestHouseId}")
     public ResponseEntity<List<RoomDTO>> getRoomsByGuestHouseId(@PathVariable Long guestHouseId) {
-        List<RoomDTO> rooms = roomService.getRoomsByGuestHouseId(guestHouseId);
-        if (rooms.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        try {
+            List<RoomDTO> rooms = roomService.getRoomsByGuestHouseId(guestHouseId);
+            return new ResponseEntity<>(rooms, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Error fetching rooms: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(rooms, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
