@@ -7,7 +7,7 @@
     </div>
   </div>
 
-  <!-- Add New Bed Form -->
+  
   <form [formGroup]="bedForm" (ngSubmit)="onAddBed()">
     <mat-card class="bed-config-card">
       <mat-card-header>
@@ -46,7 +46,7 @@
     </mat-card>
   </form>
 
-  <!-- Existing Beds Grid -->
+  
   <mat-card class="existing-beds-card" *ngIf="beds.length > 0">
     <mat-card-header>
       <mat-card-title>Existing Beds</mat-card-title>

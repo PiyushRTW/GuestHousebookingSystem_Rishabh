@@ -30,7 +30,6 @@ export class UserLayoutComponent {
   }
 
   openTermsAndConditions() {
-    // Open the PDF in the current tab
     window.location.href = `${environment.apiUrl}/terms-and-conditions`;
   }
 }

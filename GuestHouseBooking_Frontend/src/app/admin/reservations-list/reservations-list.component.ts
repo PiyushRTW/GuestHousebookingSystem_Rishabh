@@ -121,14 +121,18 @@ export class ReservationsListComponent implements OnInit {
   }
 
   setupFilterListener(): void {
-    this.filterForm.valueChanges.subscribe(() => {
+    this.filterForm.valueChanges.subscribe((value) => {
+      if (value.status !== undefined) {
+        this.loadBookings(); // Reload bookings when status changes
+      }
       this.applyFilters();
     });
   }
 
   loadBookings(): void {
     this.isLoading = true;
-    this.bookingService.getAllBookings(BookingStatus.CONFIRMED).subscribe({
+    const selectedStatus = this.filterForm.get('status')?.value || BookingStatus.CONFIRMED;
+    this.bookingService.getAllBookings(selectedStatus).subscribe({
       next: (bookings) => {
         this.allBookings = bookings;
         this.dataSource = new MatTableDataSource(bookings);
@@ -150,28 +154,28 @@ export class ReservationsListComponent implements OnInit {
     const filters = this.filterForm.value;
     let filteredBookings = this.allBookings;
 
-    // Filter by guest house
+    
     if (filters.guestHouse) {
-      filteredBookings = filteredBookings.filter(booking => 
+      filteredBookings = filteredBookings.filter(booking =>
         booking.guestHouseId === filters.guestHouse
       );
     }
 
-    // Filter by room
+    
     if (filters.room) {
-      filteredBookings = filteredBookings.filter(booking => 
+      filteredBookings = filteredBookings.filter(booking =>
         booking.roomId === filters.room
       );
     }
 
-    // Filter by bed
+    
     if (filters.bed) {
       filteredBookings = filteredBookings.filter(booking => 
         booking.bedId === filters.bed
       );
     }
 
-    // Filter by date range
+    
     if (filters.startDate && filters.endDate) {
       const startDate = new Date(filters.startDate);
       const endDate = new Date(filters.endDate);
@@ -182,7 +186,7 @@ export class ReservationsListComponent implements OnInit {
       });
     }
 
-    // Filter by status
+    
     if (filters.status) {
       filteredBookings = filteredBookings.filter(booking => 
         booking.status === filters.status

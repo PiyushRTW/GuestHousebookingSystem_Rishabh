@@ -36,7 +36,7 @@ export class ForgetPasswordComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check if we're in reset mode (have a token in the URL)
+    
     this.route.queryParams.subscribe(params => {
       this.resetToken = params['token'];
       if (this.resetToken) {

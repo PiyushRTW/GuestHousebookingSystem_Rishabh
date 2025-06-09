@@ -7,14 +7,14 @@
   <mat-divider></mat-divider>
 
   <div mat-dialog-content class="booking-details-content">
-    <!-- Status Banner -->
+    
     <div class="status-banner" [ngClass]="getStatusClass(data.status)">
       <mat-icon>{{ getStatusIcon(data.status) }}</mat-icon>
       <span>{{ data.status }}</span>
     </div>
 
     <div class="details-grid">
-      <!-- Guest Information Card -->
+      
       <mat-card class="detail-card guest-info">
         <mat-card-header>
           <mat-icon mat-card-avatar>person</mat-icon>
@@ -44,7 +44,7 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Accommodation Details Card -->
+      
       <mat-card class="detail-card accommodation-info">
         <mat-card-header>
           <mat-icon mat-card-avatar>hotel</mat-icon>
@@ -66,7 +66,7 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Booking Details Card -->
+      
       <mat-card class="detail-card booking-info">
         <mat-card-header>
           <mat-icon mat-card-avatar>event</mat-icon>
@@ -92,7 +92,7 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Audit Information Card -->
+      
       <mat-card class="detail-card audit-info">
         <mat-card-header>
           <mat-icon mat-card-avatar>history</mat-icon>

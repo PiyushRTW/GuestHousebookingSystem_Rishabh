@@ -60,7 +60,7 @@ const routes: Routes = [
         canActivate: [AuthGuard],
         data: { role: 'ADMIN' }
       },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' } // Default admin route
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
 ];

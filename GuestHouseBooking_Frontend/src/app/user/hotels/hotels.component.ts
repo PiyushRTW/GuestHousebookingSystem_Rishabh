@@ -104,7 +104,6 @@ export class HotelsComponent implements OnInit {
       return;
     }
 
-    // Navigate to booking page with guest house ID
     this.router.navigate(['/user/booking-page'], {
       queryParams: { 
         guestHouseId: guestHouse.id,

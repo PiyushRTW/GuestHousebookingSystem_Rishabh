@@ -133,7 +133,6 @@
   }
 }
 
-// Loading state styles
 button[disabled] {
   position: relative;
   
@@ -145,7 +144,6 @@ button[disabled] {
   }
 }
 
-// Animation for form fields
 mat-form-field {
   transition: transform 0.2s ease-in-out;
 
@@ -154,7 +152,6 @@ mat-form-field {
   }
 }
 
-// Custom styles for error messages
 mat-error {
   font-size: 0.85rem;
   margin-top: 4px;

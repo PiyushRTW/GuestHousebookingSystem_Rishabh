@@ -52,7 +52,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
         this.loadGuestHouses();
         this.setupFormListeners();
 
-        // Check for guestHouseId in query params
+        
         this.route.queryParams
             .pipe(takeUntil(this.destroy$))
             .subscribe(params => {
@@ -60,7 +60,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
                     const guestHouseId = Number(params['guestHouseId']);
                     this.bookingForm.patchValue({ guestHouseId });
                     
-                    // Load rooms for this guest house
+                    
                     this.loadAvailableRooms(guestHouseId);
                 }
             });
@@ -74,7 +74,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
     initForm(): void {
         const currentUser = this.authService.currentUserValue;
         this.bookingForm = this.fb.group({
-            // Guest Information
+            
             firstName: [currentUser?.firstName || '', Validators.required],
             lastName: [currentUser?.lastName || '', Validators.required],
             email: [currentUser?.email || '', [Validators.required, Validators.email]],
@@ -82,7 +82,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
             gender: ['', Validators.required],
             address: ['', Validators.required],
 
-            // Booking Details
+            
             guestHouseId: [null, Validators.required],
             roomId: [null, Validators.required],
             bedId: [null, Validators.required],
@@ -129,7 +129,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
     }
 
     setupFormListeners(): void {
-        // Guest House selection listener
+        
         this.bookingForm.get('guestHouseId')?.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(guestHouseId => {
@@ -139,7 +139,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
                 }
             });
 
-        // Room selection listener
+        
         this.bookingForm.get('roomId')?.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(roomId => {
@@ -149,7 +149,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
                 }
             });
 
-        // Bed selection listener
+        
         this.bookingForm.get('bedId')?.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(bedId => {
@@ -158,7 +158,7 @@ export class BookingPageComponent implements OnInit, OnDestroy {
                 }
             });
 
-        // Date change listeners
+        
         this.bookingForm.get('checkInDate')?.valueChanges
             .pipe(takeUntil(this.destroy$))
             .subscribe(() => {

@@ -8,13 +8,13 @@
       <mat-card-subtitle>Manage your personal information</mat-card-subtitle>
     </mat-card-header>
 
-    <!-- Loading State -->
+    
     <div *ngIf="isLoading" class="loading-state">
       <mat-spinner diameter="40"></mat-spinner>
       <p>Loading your profile...</p>
     </div>
 
-    <!-- Error State -->
+    
     <div *ngIf="!isLoading && error" class="error-state">
       <mat-icon color="warn">error_outline</mat-icon>
       <p>{{ error }}</p>
@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <!-- User Form -->
+    
     <form [formGroup]="userForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading && !error">
       <mat-card-content>
         <div class="form-grid">

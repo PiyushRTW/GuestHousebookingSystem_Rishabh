@@ -25,14 +25,14 @@ export class JwtInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip for login, register and refresh endpoints
+    
     if (request.url.includes('/api/auth/login') || 
         request.url.includes('/api/auth/register') || 
         request.url.includes('/api/auth/refresh')) {
       return next.handle(request);
     }
 
-    // Only add auth header for API requests
+    
     if (!request.url.startsWith(environment.apiUrl)) {
       return next.handle(request);
     }
@@ -40,7 +40,7 @@ export class JwtInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
     
     if (token) {
-      // Check if token is expired before making the request
+      
       if (this.authService.isTokenExpired()) {
         return this.handleExpiredToken(request, next);
       }

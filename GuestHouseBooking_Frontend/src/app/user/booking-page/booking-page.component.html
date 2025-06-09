@@ -1,6 +1,6 @@
 <div class="booking-container">
   <mat-stepper linear #stepper>
-    <!-- Guest Information Step -->
+    
     <mat-step [stepControl]="bookingForm" [completed]="isGuestInfoValid()">
       <ng-template matStepLabel>
         <span class="step-label">Guest Information</span>
@@ -83,7 +83,7 @@
       </form>
     </mat-step>
 
-    <!-- Booking Details Step -->
+    
     <mat-step [stepControl]="bookingForm" [completed]="isBookingValid()">
       <ng-template matStepLabel>
         <span class="step-label">Booking Details</span>
@@ -178,7 +178,7 @@
             </mat-form-field>
           </div>
 
-          <!-- Price Summary -->
+          
           <div class="price-summary" *ngIf="selectedBed">
             <h4>Booking Summary</h4>
             <div class="summary-grid">
@@ -211,7 +211,7 @@
       </form>
     </mat-step>
 
-    <!-- Confirmation Step -->
+    
     <mat-step>
       <ng-template matStepLabel>
         <span class="step-label">Confirmation</span>

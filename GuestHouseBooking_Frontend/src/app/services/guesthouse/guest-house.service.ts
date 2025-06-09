@@ -103,16 +103,16 @@ export class GuestHouseService {
     console.error('An error occurred:', error);
 
     if (error.status === 401) {
-      // Handle unauthorized error
+      
       this.authService.logout();
       return throwError(() => new Error('Session expired. Please login again.'));
     }
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
+      
       return throwError(() => new Error('An error occurred: ' + error.error.message));
     } else {
-      // Server-side error
+      
       let errorMessage = 'An error occurred: ';
       if (error.error?.message) {
         errorMessage += error.error.message;

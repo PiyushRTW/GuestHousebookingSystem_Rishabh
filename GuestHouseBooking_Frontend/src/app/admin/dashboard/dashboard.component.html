@@ -1,5 +1,4 @@
 <div class="dashboard-container">
-  <!-- Welcome Section -->
   <mat-card class="welcome-card">
     <mat-card-content>
       <h1>Welcome to Admin Dashboard</h1>
@@ -7,7 +6,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Overall Statistics -->
   <div class="stats-section">
     <h2><mat-icon>analytics</mat-icon> Overall Statistics</h2>
     <div class="stats-grid">
@@ -53,7 +51,6 @@
     </div>
   </div>
 
-  <!-- Booking Statistics -->
   <div class="stats-section">
     <h2><mat-icon>book_online</mat-icon> Booking Statistics</h2>
     <div class="stats-grid">
@@ -99,7 +96,6 @@
     </div>
   </div>
 
-  <!-- Period Report -->
   <div class="report-section">
     <h2><mat-icon>assessment</mat-icon> Generate Period Report</h2>
     <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
@@ -126,7 +122,6 @@
       </div>
     </form>
 
-    <!-- Report Results -->
     <div class="report-results" *ngIf="reportStats.totalRevenue !== undefined">
       <div class="stats-grid">
         <mat-card class="stat-card revenue-card">
@@ -180,7 +175,6 @@
     </div>
   </div>
 
-  <!-- Quick Actions -->
   <mat-card class="quick-links-card">
     <mat-card-title>
       <mat-icon>speed</mat-icon>

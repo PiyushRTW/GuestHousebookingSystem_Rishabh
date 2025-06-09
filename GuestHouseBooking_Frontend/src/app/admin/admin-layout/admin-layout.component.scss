@@ -138,6 +138,79 @@
   }
 }
 
+// Mobile-first media queries
+@media (max-width: 767px) {
+  .admin-page-container {
+    flex-direction: column;
+  }
+
+  .admin-header {
+    position: fixed;
+    width: 100%;
+    padding: 8px;
+
+    .admin-header-left {
+      .admin-navigation-text {
+        font-size: 1.1rem;
+      }
+    }
+
+    .admin-header-right {
+      .admin-profile {
+        .admin-name {
+          display: none;
+        }
+        
+        .logout-button {
+          padding: 4px 8px;
+          
+          span {
+            display: none;
+          }
+          
+          mat-icon {
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 64px;
+    bottom: 0;
+    left: -260px;
+    height: calc(100vh - 64px);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+
+    &:not(.closed) {
+      transform: translateX(260px);
+    }
+
+    mat-nav-list {
+      padding: 8px 4px;
+
+      a {
+        height: 56px; // Larger touch targets for mobile
+        
+        mat-icon {
+          margin-right: 16px;
+        }
+      }
+    }
+  }
+
+  .admin-content {
+    margin-top: 64px;
+    padding: 16px;
+    width: 100%;
+    min-height: calc(100vh - 64px);
+  }
+}
+
+// Tablet and desktop styles
 @media (min-width: 768px) {
   .admin-page-container {
     flex-direction: row;
@@ -156,14 +229,59 @@
     bottom: 0;
     left: 0;
     height: calc(100vh - 64px);
+    transform: none;
+    transition: width 0.3s ease;
+
+    &.closed {
+      width: 0;
+    }
   }
 
   .admin-content {
     margin-left: 260px;
     margin-top: 64px;
+    transition: margin-left 0.3s ease;
 
     &.sidebar-closed {
       margin-left: 0;
+    }
+  }
+}
+
+// Add overlay for mobile when sidebar is open
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  @media (max-width: 767px) {
+    &.visible {
+      display: block;
+      opacity: 1;
+    }
+  }
+}
+
+// Touch-friendly improvements
+@media (hover: none) {
+  .admin-sidebar {
+    mat-nav-list a {
+      &:active {
+        background: rgba(103, 58, 183, 0.2);
+      }
+    }
+  }
+  
+  .logout-button {
+    &:active {
+      transform: scale(0.98);
     }
   }
 }

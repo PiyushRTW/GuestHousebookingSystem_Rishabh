@@ -34,4 +34,4 @@ const routes: Routes = [
     MatProgressSpinnerModule
   ]
 })
-export class LoginModule { } 
+export class LoginModule { }

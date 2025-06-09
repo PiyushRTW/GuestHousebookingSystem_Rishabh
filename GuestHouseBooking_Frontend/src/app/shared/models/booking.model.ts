@@ -24,7 +24,6 @@ export interface Booking {
     status: BookingStatus;
     purpose?: string;
     
-    // Populated relations
     user?: User;
     guestHouse?: GuestHouse;
     room?: Room;

@@ -49,7 +49,6 @@ export class LoginComponent implements OnInit {
         .subscribe({
           next: (response) => {
             console.log('Login successful:', response);
-            // Navigation is handled in the auth service
           },
           error: (error) => {
             console.error('Login error details:', error);

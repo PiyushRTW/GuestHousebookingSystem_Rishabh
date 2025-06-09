@@ -3,7 +3,6 @@
 <form [formGroup]="guestHouseForm" (ngSubmit)="onSubmit()">
   <mat-dialog-content>
     <div class="form-fields">
-      <!-- Basic Information -->
       <mat-form-field appearance="outline">
         <mat-label>Name</mat-label>
         <input matInput formControlName="name" placeholder="Enter guest house name">
@@ -12,7 +11,6 @@
         </mat-error>
       </mat-form-field>
 
-      <!-- Location Information -->
       <mat-form-field appearance="outline">
         <mat-label>Address</mat-label>
         <input matInput formControlName="address" placeholder="Enter street address">
@@ -47,7 +45,6 @@
         </mat-form-field>
       </div>
 
-      <!-- Contact Information -->
       <mat-form-field appearance="outline">
         <mat-label>Contact Number</mat-label>
         <input matInput formControlName="contactNumber" placeholder="Enter contact number">
@@ -67,7 +64,6 @@
         </mat-error>
       </mat-form-field>
 
-      <!-- Additional Information -->
       <mat-form-field appearance="outline">
         <mat-label>Description</mat-label>
         <textarea matInput formControlName="description" placeholder="Enter description" rows="3"></textarea>

@@ -63,7 +63,7 @@ export class UserService {
     
     return this.http.put<User>(`${this.apiUrl}/${currentUser.id}`, userData).pipe(
       tap(updatedUser => {
-        // Update the stored user data
+        
         this.authService.updateStoredUserData(updatedUser);
       }),
       catchError(this.handleError)
@@ -73,10 +73,10 @@ export class UserService {
   private handleError(error: any) {
     let errorMessage = 'An error occurred';
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
+      
       errorMessage = error.error.message;
     } else {
-      // Server-side error
+      
       errorMessage = error.error?.message || `Error Code: ${error.status}\nMessage: ${error.message}`;
     }
     console.error(errorMessage);

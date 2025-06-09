@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth.service';
 import { Room } from '../../shared/models/room.model';
 
-// Room DTO matching backend entity
+
 export interface RoomDTO {
   id?: number;
   guestHouseId: number;
@@ -21,7 +21,7 @@ export interface RoomDTO {
   lastModifiedBy?: string;
 }
 
-// Bed DTO matching backend entity
+
 export interface BedDTO {
   id?: number;
   roomId: number;
@@ -58,7 +58,7 @@ export class RoomService {
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('An error occurred:', error);
     if (error.status === 401) {
-      // Handle unauthorized
+      
       this.authService.refreshToken().pipe(
         catchError(() => {
           this.authService.logout();
@@ -69,7 +69,7 @@ export class RoomService {
     return throwError(() => error);
   }
 
-  // Room operations
+  
   getAllRooms(): Observable<Room[]> {
     return this.http.get<Room[]>(this.apiUrl, { headers: this.getHeaders() })
       .pipe(catchError(this.handleError.bind(this)));
@@ -86,7 +86,7 @@ export class RoomService {
     }).pipe(
       catchError(error => {
         if (error.status === 404) {
-          // Return empty array if no rooms found
+          
           return of([]);
         }
         return this.handleError(error);
@@ -112,7 +112,7 @@ export class RoomService {
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Bed operations
+  
   getAllBeds(): Observable<BedDTO[]> {
     return this.http.get<BedDTO[]>(this.bedApiUrl, { 
       headers: this.getHeaders() 
@@ -131,7 +131,7 @@ export class RoomService {
     }).pipe(
       catchError(error => {
         if (error.status === 404) {
-          // Return empty array if no beds found
+          
           return of([]);
         }
         return this.handleError(error);
@@ -157,7 +157,7 @@ export class RoomService {
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Room statistics
+  
   getRoomCount(guestHouseId: number): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/count/by-guesthouse/${guestHouseId}`, {
       headers: this.getHeaders()

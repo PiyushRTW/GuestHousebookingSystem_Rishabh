@@ -3,7 +3,7 @@
   max-width: 1400px;
   margin: 0 auto;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  min-height: calc(100vh - 64px); // Adjust based on your header height
+  min-height: calc(100vh - 64px); 
 }
 
 .welcome-card {
@@ -94,7 +94,6 @@
   }
 }
 
-// Overall Statistics Section - Blue Theme
 .property-card, .rooms-card, .beds-card, .occupied-card, .available-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #2c3e50;
@@ -116,7 +115,6 @@
   }
 }
 
-// Booking Statistics Section - Green Theme
 .total-bookings-card, .pending-card, .confirmed-card, .completed-card, .cancelled-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #2c3e50;
@@ -138,7 +136,6 @@
   }
 }
 
-// Report Statistics Section - Purple Theme
 .revenue-card, .visits-card, .checkins-card, .nights-card, .duration-card, .value-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   color: #2c3e50;
@@ -280,7 +277,6 @@
   }
 }
 
-// Responsive adjustments
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

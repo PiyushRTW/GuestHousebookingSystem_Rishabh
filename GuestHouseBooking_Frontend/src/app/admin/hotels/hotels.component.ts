@@ -62,7 +62,7 @@ export class HotelsComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         if (result.id) {
-          // Update existing guest house
+          
           this.guestHouseService.updateGuestHouse(result.id, result).subscribe({
             next: () => {
               this.snackBar.open('Guest house updated successfully', 'Close', { duration: 3000 });
@@ -79,7 +79,6 @@ export class HotelsComponent implements OnInit {
             }
           });
         } else {
-          // Create new guest house
           this.guestHouseService.createGuestHouse(result).subscribe({
             next: () => {
               this.snackBar.open('Guest house created successfully', 'Close', { duration: 3000 });

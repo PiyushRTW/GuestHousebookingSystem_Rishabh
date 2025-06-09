@@ -29,7 +29,7 @@ export class UserDetailsComponent implements OnInit, OnDestroy {
       phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       email: ['', [Validators.required, Validators.email]]
     });
-    this.userForm.disable(); // Initially disable the form
+    this.userForm.disable(); 
   }
 
   ngOnInit(): void {
@@ -115,6 +115,6 @@ export class UserDetailsComponent implements OnInit, OnDestroy {
   cancelEdit(): void {
     this.isEditing = false;
     this.userForm.disable();
-    this.loadUserDetails(); // Reload original data
+    this.loadUserDetails(); 
   }
 }

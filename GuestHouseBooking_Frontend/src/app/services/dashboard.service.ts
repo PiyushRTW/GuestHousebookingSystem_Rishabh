@@ -4,21 +4,17 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface DashboardStats {
-  // Overall Statistics
+  
   totalGuestHouses: number;
   totalRooms: number;
   totalBeds: number;
   occupiedBeds: number;
   availableBeds: number;
-  
-  // Booking Statistics
   totalBookings: number;
   pendingBookings: number;
   confirmedBookings: number;
   completedBookings: number;
   cancelledBookings: number;
-  
-  // Period Report Statistics
   totalRevenue: number;
   totalGuestVisits: number;
   totalCheckIns: number;

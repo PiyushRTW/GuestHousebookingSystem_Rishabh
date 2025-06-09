@@ -1,15 +1,13 @@
-// Define a simple interface for mock booking logs
 export interface BookingLog {
   id: number;
-  checkInDate: Date; // Use Date objects for easier comparison
+  checkInDate: Date; 
   checkOutDate: Date;
   revenue: number;
-  guestId: number; // For counting unique guests
-  guestName: string; // For display/identification
+  guestId: number; 
+  guestName: string; 
 }
-
 import { Component, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, Validators, ValidatorFn } from '@angular/forms'; // Import FormBuilder, FormGroup, and ValidatorFn
+import { AbstractControl, FormBuilder, FormGroup, Validators, ValidatorFn } from '@angular/forms'; 
 import { DashboardService } from 'src/app/services/dashboard.service';
 
 @Component({
@@ -24,27 +22,19 @@ export class DashboardComponent implements OnInit {
   loading = false;
   reportLoading = false;
 
-  // Overall statistics (can remain static for now or be fetched globally)
   totalHotels: number = 5;
   totalRooms: number = 120;
   totalBookings: number = 75;
   pendingBookings: number = 10;
-
-  // Form group for date range selection
   dateRangeForm!: FormGroup;
-
-  // Period-specific statistics
   periodRevenue: number = 0;
   periodGuestsVisited: number = 0;
   periodCheckIns: number = 0;
   periodCheckOuts: number = 0;
-
-  // Mock booking log data
-  // In a real app, this would come from a backend service
   mockBookingLogs: BookingLog[] = [
     { id: 1, checkInDate: new Date('2024-01-05'), checkOutDate: new Date('2024-01-10'), revenue: 500, guestId: 101, guestName: 'Alice' },
     { id: 2, checkInDate: new Date('2024-01-12'), checkOutDate: new Date('2024-01-15'), revenue: 300, guestId: 102, guestName: 'Bob' },
-    { id: 3, checkInDate: new Date('2024-02-01'), checkOutDate: new Date('2024-02-05'), revenue: 450, guestId: 101, guestName: 'Alice' }, // Alice visits again
+    { id: 3, checkInDate: new Date('2024-02-01'), checkOutDate: new Date('2024-02-05'), revenue: 450, guestId: 101, guestName: 'Alice' }, 
     { id: 4, checkInDate: new Date('2024-02-10'), checkOutDate: new Date('2024-02-12'), revenue: 200, guestId: 103, guestName: 'Charlie' },
     { id: 5, checkInDate: new Date('2024-03-01'), checkOutDate: new Date('2024-03-03'), revenue: 250, guestId: 104, guestName: 'David' },
     { id: 6, checkInDate: new Date('2024-03-15'), checkOutDate: new Date('2024-03-20'), revenue: 600, guestId: 105, guestName: 'Eve' },
@@ -68,16 +58,11 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadOverallStats();
-    // Initialize the date range form
     this.dateRangeForm = this.fb.group({
       startDate: [null, Validators.required],
       endDate: [null, Validators.required]
     });
 
-    // Optionally generate a report for a default period on load
-    // For example, current month:
-    // this.setDefaultDateRange();
-    // this.generateReport(); // Call it here if you set a default
   }
 
   loadOverallStats() {
@@ -94,11 +79,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Optional: Set a default date range (e.g., current month)
   setDefaultDateRange(): void {
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); 
 
     this.dateRangeForm.patchValue({
       startDate: startOfMonth,
@@ -106,7 +90,6 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Custom validator for date range (endDate must be after startDate)
   dateRangeValidator: ValidatorFn = (control: AbstractControl): { [key: string]: any } | null => {
     const start = control.get('startDate')?.value;
     const end = control.get('endDate')?.value;

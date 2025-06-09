@@ -1,14 +1,14 @@
-<!-- Guest Houses List -->
+
 <div class="guest-houses-container">
   <h1>Available Guest Houses</h1>
   
-  <!-- Loading State -->
+  
   <div *ngIf="loading" class="loading-state">
     <mat-spinner diameter="40"></mat-spinner>
     <p>Loading guest houses...</p>
   </div>
 
-  <!-- Error State -->
+  
   <div *ngIf="error" class="error-state">
     <mat-icon color="warn">error</mat-icon>
     <p>{{ error }}</p>
@@ -17,7 +17,7 @@
     </button>
   </div>
 
-  <!-- Guest Houses Grid -->
+  
   <div *ngIf="!loading && !error" class="guest-houses-grid">
     <mat-card *ngFor="let guestHouse of guestHouses" class="guest-house-card">
       <img mat-card-image [src]="guestHouse.imageUrl || 'assets/images/default-guesthouse.jpg'" [alt]="guestHouse.name">
@@ -72,7 +72,7 @@
     </mat-card>
   </div>
 
-  <!-- No Guest Houses State -->
+  
   <div *ngIf="!loading && !error && guestHouses.length === 0" class="no-data-state">
     <mat-icon>hotel</mat-icon>
     <p>No guest houses available at the moment.</p>

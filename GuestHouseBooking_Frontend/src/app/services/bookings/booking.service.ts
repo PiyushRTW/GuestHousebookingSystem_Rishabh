@@ -18,7 +18,7 @@ export class BookingService {
   ) { }
 
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = this.authService.getToken();
     return new HttpHeaders({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -26,29 +26,21 @@ export class BookingService {
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('API Error:', error);
-    let errorMessage = 'An error occurred while processing your request.';
-    
-    if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = error.error.message;
-    } else {
-      // Server-side error
-      errorMessage = error.error?.message || error.message || errorMessage;
+    console.error('An error occurred:', error);
+    if (error.status === 401 || error.status === 403) {
+      this.authService.logout();
     }
-    
-    return throwError(() => ({ message: errorMessage, error }));
+    return throwError(() => error);
   }
 
   createBooking(booking: Booking): Observable<Booking> {
-    console.log('Creating booking with data:', booking); // Debug log
     return this.http.post<Booking>(this.apiUrl, booking, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   getBookingById(id: number): Observable<Booking> {
     return this.http.get<Booking>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   getAllBookings(status?: BookingStatus): Observable<Booking[]> {
@@ -57,7 +49,7 @@ export class BookingService {
       url += `?status=${status}`;
     }
     return this.http.get<Booking[]>(url, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   getUserBookings(status?: BookingStatus): Observable<Booking[]> {
@@ -71,50 +63,51 @@ export class BookingService {
       url += `?status=${status}`;
     }
 
-    return this.http.get<Booking[]>(url).pipe(
-      map(bookings => bookings || []),
-      catchError(this.handleError)
-    );
+    return this.http.get<Booking[]>(url, { headers: this.getHeaders() })
+      .pipe(
+        map(bookings => bookings || []),
+        catchError(this.handleError.bind(this))
+      );
   }
 
   getBookingsByBedId(bedId: number): Observable<Booking[]> {
     return this.http.get<Booking[]>(`${this.apiUrl}/by-bed/${bedId}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   getPendingBookings(): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.apiUrl}?status=${BookingStatus.PENDING}`);
+    return this.http.get<Booking[]>(`${this.apiUrl}?status=${BookingStatus.PENDING}`, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   updateBooking(id: number, booking: Booking): Observable<Booking> {
     return this.http.put<Booking>(`${this.apiUrl}/${id}`, booking, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   deleteBooking(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   approveBooking(bookingId: number): Observable<Booking> {
-    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/approve`, {
-      status: BookingStatus.CONFIRMED
-    }, { headers: this.getHeaders() }).pipe(catchError(this.handleError));
+    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/approve`, {}, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   rejectBooking(bookingId: number, reason?: string): Observable<Booking> {
-    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/reject`, {
-      status: BookingStatus.DENIED,
-      rejectionReason: reason
-    }, { headers: this.getHeaders() }).pipe(catchError(this.handleError));
+    const body = reason ? { rejectionReason: reason } : {};
+    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/reject`, body, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   cancelBooking(bookingId: number): Observable<Booking> {
     return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/cancel`, {}, { headers: this.getHeaders() })
-      .pipe(catchError(this.handleError));
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
-  completeBooking(bookingId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${bookingId}/complete`, {});
+  completeBooking(bookingId: number): Observable<Booking> {
+    return this.http.put<Booking>(`${this.apiUrl}/${bookingId}/complete`, {}, { headers: this.getHeaders() })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 }

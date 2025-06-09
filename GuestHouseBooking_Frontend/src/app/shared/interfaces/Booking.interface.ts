@@ -1,6 +1,6 @@
-// src/app/admin/reservations/booking.model.ts (or a shared models folder)
+
 export interface Booking {
-  id: string; // Unique booking ID, perhaps a UUID or timestamp-based
+  id: string; 
   bookingDate: Date;
   guestName: string;
   guestEmail: string;
@@ -15,7 +15,7 @@ export interface Booking {
   pricePerNight: number;
   numberOfNights: number;
   totalCost: number;
-  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed'; // Booking status
-  approvedBy?: string; // Admin who approved it (optional for now)
-  approvalDate?: Date; // Date of approval (optional for now)
+  status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Completed'; 
+  approvedBy?: string; 
+  approvalDate?: Date; 
 }

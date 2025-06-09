@@ -55,7 +55,7 @@ export class AuthService {
         const tokenExp = this.jwtHelper.getTokenExpirationDate(token);
         if (tokenExp) {
           const timeToExpiry = tokenExp.getTime() - Date.now();
-          const refreshTime = timeToExpiry * 0.75; // Refresh at 75% of token lifetime
+          const refreshTime = timeToExpiry * 0.75; 
           this.scheduleTokenRefresh(refreshTime);
         }
       }
@@ -85,7 +85,7 @@ export class AuthService {
         }),
         map(response => {
           console.log('Navigating user with role:', response.role);
-          // Check for pending booking
+          
           const pendingBookingId = sessionStorage.getItem('pendingBookingGuestHouseId');
           if (pendingBookingId && response.role === 'USER') {
             sessionStorage.removeItem('pendingBookingGuestHouseId');
@@ -140,7 +140,7 @@ export class AuthService {
         if (response && response.token) {
           this.storeToken(response.token);
           this.refreshTokenSubject.next(response.token);
-          this.setupTokenRefresh(); // Schedule next refresh
+          this.setupTokenRefresh(); 
         }
       }),
       map(response => response.token),

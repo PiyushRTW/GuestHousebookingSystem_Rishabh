@@ -4,19 +4,19 @@
 
 .hotel-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
   gap: 16px;
   margin-top: 16px;
 }
 
 .hotel-card {
-  max-width: 400px; /* Optional: set a maximum width for the cards */
+  max-width: 400px; 
 }
 
 .mat-card-image {
   width: 100%;
   height: auto;
-  object-fit: cover; /* Ensure image covers the area without distortion */
+  object-fit: cover; 
 }
 
 .mat-card-actions {

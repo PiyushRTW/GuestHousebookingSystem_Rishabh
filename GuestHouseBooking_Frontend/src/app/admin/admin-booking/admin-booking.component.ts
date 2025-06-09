@@ -51,7 +51,6 @@ export class AdminBookingComponent implements OnInit {
 
   initForm(): void {
     this.bookingForm = this.fb.group({
-      // Guest Information
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -59,7 +58,6 @@ export class AdminBookingComponent implements OnInit {
       gender: ['', Validators.required],
       address: ['', Validators.required],
 
-      // Booking Details
       guestHouseId: [null, Validators.required],
       roomId: [null, Validators.required],
       bedId: [null, Validators.required],
@@ -119,7 +117,6 @@ export class AdminBookingComponent implements OnInit {
   }
 
   setupFormListeners(): void {
-    // Guest House selection listener
     this.bookingForm.get('guestHouseId')?.valueChanges.subscribe(guestHouseId => {
       if (guestHouseId) {
         this.loadAvailableRooms(guestHouseId);
@@ -127,7 +124,6 @@ export class AdminBookingComponent implements OnInit {
       }
     });
 
-    // Room selection listener
     this.bookingForm.get('roomId')?.valueChanges.subscribe(roomId => {
       if (roomId) {
         this.loadAvailableBeds(roomId);
@@ -135,14 +131,12 @@ export class AdminBookingComponent implements OnInit {
       }
     });
 
-    // Bed selection listener
     this.bookingForm.get('bedId')?.valueChanges.subscribe(bedId => {
       if (bedId) {
         this.loadBedDetails(bedId);
       }
     });
 
-    // Date change listeners
     this.bookingForm.get('checkInDate')?.valueChanges.subscribe(() => this.updatePriceCalculation());
     this.bookingForm.get('checkOutDate')?.valueChanges.subscribe(() => this.updatePriceCalculation());
   }

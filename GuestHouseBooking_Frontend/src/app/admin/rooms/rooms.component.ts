@@ -32,25 +32,25 @@ export class RoomsComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    // Check if token exists and is valid
+    
     if (!this.authService.isAuthenticated()) {
       this.handleUnauthorized();
       return;
     }
 
-    // Initialize the component
+    
     this.initForm();
     this.loadGuestHouses();
 
-    // Set up token refresh/check interval
+    
     const tokenCheckInterval = setInterval(() => {
       if (!this.authService.isAuthenticated()) {
         clearInterval(tokenCheckInterval);
         this.handleUnauthorized();
       }
-    }, 60000); // Check every minute
+    }, 60000); 
 
-    // Clean up interval on destroy
+    
     this.destroy$.subscribe(() => clearInterval(tokenCheckInterval));
   }
 
@@ -67,7 +67,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
       amenities: ['']
     });
 
-    // Load rooms when guest house is selected
+    
     this.roomForm.get('guestHouseId')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(guestHouseId => {
@@ -98,7 +98,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
             }
             this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
           }
-          return of([]); // Return empty array on error
+          return of([]); 
         }),
         finalize(() => this.isLoading = false)
       )
@@ -109,7 +109,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
 
   loadRooms(guestHouseId: number): void {
     this.isLoading = true;
-    this.rooms = []; // Clear existing rooms while loading
+    this.rooms = []; 
     this.roomService.getRoomsByGuestHouseId(guestHouseId)
       .pipe(
         takeUntil(this.destroy$),
@@ -128,7 +128,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
             this.handleUnauthorized();
             return;
           }
-          // Only show error message if it's not a 404
+          
           if (error.status !== 404) {
             let errorMessage = 'Error loading rooms. ';
             if (error.error?.message) {
@@ -140,7 +140,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
               duration: 5000
             });
           }
-          this.rooms = []; // Ensure rooms array is empty on error
+          this.rooms = []; 
         }
       });
   }
