@@ -26,7 +26,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepperModule } from '@angular/material/stepper';
 
-
 @NgModule({
   declarations: [
     HotelsComponent,

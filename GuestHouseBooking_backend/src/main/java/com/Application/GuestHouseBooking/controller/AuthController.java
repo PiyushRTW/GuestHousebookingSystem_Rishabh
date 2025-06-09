@@ -1,7 +1,9 @@
 package com.Application.GuestHouseBooking.controller;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -24,6 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Application.GuestHouseBooking.Authentication.AuthRequest;
 import com.Application.GuestHouseBooking.Config.JwtUtil;
+import com.Application.GuestHouseBooking.MailServices.MailService;
+import com.Application.GuestHouseBooking.dto.PasswordResetDTO;
 import com.Application.GuestHouseBooking.entity.User;
 import com.Application.GuestHouseBooking.repository.UserRepository;
 
@@ -43,6 +50,12 @@ public class AuthController {
 
     @Autowired
     private UserRepository userRepository; // Add this
+
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Handles user login and generates a JWT upon successful authentication.
@@ -159,6 +172,61 @@ public class AuthController {
         } catch (Exception e) {
             logger.error("Error during logout: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of("message", "Error during logout"));
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetDTO request) {
+        try {
+            User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + request.getEmail()));
+
+            // Generate reset token
+            String token = UUID.randomUUID().toString();
+            user.setResetToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(24)); // Token valid for 24 hours
+            userRepository.save(user);
+
+            // Send email with reset link
+            mailService.sendPasswordResetEmail(user.getEmail(), token);
+
+            return ResponseEntity.ok(Map.of("message", "Password reset instructions sent to your email"));
+        } catch (UsernameNotFoundException e) {
+            // Return same message even if email doesn't exist (security best practice)
+            return ResponseEntity.ok(Map.of("message", "If your email exists in our system, you will receive password reset instructions"));
+        } catch (Exception e) {
+            logger.error("Error in forgot password: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of("message", "Error processing request"));
+        }
+    }
+
+    @GetMapping("/validate-reset-token/{token}")
+    public ResponseEntity<?> validateResetToken(@PathVariable String token) {
+        try {
+            User user = userRepository.findByResetTokenAndResetTokenExpiryAfter(token, LocalDateTime.now())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
+            return ResponseEntity.ok(Map.of("valid", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("valid", false, "message", "Invalid or expired token"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetDTO request) {
+        try {
+            User user = userRepository.findByResetTokenAndResetTokenExpiryAfter(request.getToken(), LocalDateTime.now())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
+
+            // Update password
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            user.setResetToken(null);
+            user.setResetTokenExpiry(null);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Password has been reset successfully"));
+        } catch (Exception e) {
+            logger.error("Error in reset password: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired token"));
         }
     }
 

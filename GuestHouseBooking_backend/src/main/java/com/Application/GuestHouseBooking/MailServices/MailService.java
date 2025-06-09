@@ -225,6 +225,36 @@ public class MailService {
         sendEmail(message, "stay completion", booking.getId());
     }
 
+    public void sendPasswordResetEmail(String to, String resetToken) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(senderEmail);
+        message.setTo(to);
+        message.setSubject("Password Reset Request - Guest House Booking System");
+
+        String resetLink = "http://localhost:4200/forget-password?token=" + resetToken;
+
+        String emailContent = String.format(
+                "Dear User,\n\n" +
+                "We received a request to reset your password.\n\n" +
+                "To reset your password, click the link below:\n" +
+                "%s\n\n" +
+                "This link will expire in 24 hours.\n\n" +
+                "If you did not request a password reset, please ignore this email.\n\n" +
+                "Best regards,\n" +
+                "Guest House Booking Team",
+                resetLink
+        );
+
+        message.setText(emailContent);
+        try {
+            mailSender.send(message);
+            System.out.println("Successfully sent password reset email to: " + to);
+        } catch (MailException e) {
+            System.err.println("Failed to send password reset email to " + to + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void sendEmail(SimpleMailMessage message, String type, Long bookingId) {
         try {
             mailSender.send(message);

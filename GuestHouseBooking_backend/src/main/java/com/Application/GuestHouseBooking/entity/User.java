@@ -1,14 +1,23 @@
 package com.Application.GuestHouseBooking.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import java.time.LocalDateTime;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Data;
 
 @Entity
 @Table(name = "user")
@@ -39,6 +48,11 @@ public class User {
     @Enumerated(EnumType.STRING) // <<< IMPORTANT: Tells JPA to store enum as its String name
     @Column(nullable = false)
     private UserRole role;
+
+    private String resetToken;
+    
+    @Column(columnDefinition = "TIMESTAMP")
+    private LocalDateTime resetTokenExpiry;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

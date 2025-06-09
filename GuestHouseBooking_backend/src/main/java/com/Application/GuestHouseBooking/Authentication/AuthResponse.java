@@ -5,8 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor // Generates a constructor with all fields
-@NoArgsConstructor  // Generates a no-argument constructor (useful for deserialization)
+@AllArgsConstructor
+@NoArgsConstructor
 public class AuthResponse {
     private String jwt;
 }

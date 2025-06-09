@@ -1,0 +1,219 @@
+# Guest House Booking System Documentation
+
+## Project Overview
+The Guest House Booking System is a full-stack web application that facilitates the management and booking of guest houses. The system consists of an Angular-based frontend and a Spring Boot backend.
+
+## Technology Stack
+
+### Frontend (Angular)
+- Framework: Angular
+- UI Components: Angular Material
+- State Management: Services and Observables
+- Styling: SCSS/CSS
+- Package Manager: npm
+
+### Backend (Spring Boot)
+- Framework: Spring Boot
+- Database: MySQL
+- Build Tool: Maven
+- Authentication: JWT (JSON Web Tokens)
+
+## System Architecture
+
+### Frontend Architecture
+1. Components Structure:
+   - Layout Component (Main container)
+   - Hotels Component (Display guest houses)
+   - Booking Component (Handling reservations)
+   - Room Management Component
+   - User Authentication Components
+
+2. Services:
+   - Authentication Service
+   - Booking Service
+   - Room Service
+   - Hotel Service
+   - User Service
+
+### Backend Architecture
+1. Controllers:
+   - AuthController (Handle authentication)
+   - BookingController (Manage bookings)
+   - RoomController (Room operations)
+   - HotelController (Hotel management)
+
+2. Services Layer:
+   - Business logic implementation
+   - Data processing
+   - Transaction management
+
+3. Repository Layer:
+   - Database interactions
+   - CRUD operations
+
+4. DTOs:
+   - Data Transfer Objects for API communication
+   - Request/Response models
+
+## Data Flow
+
+1. User Authentication Flow:
+   - User submits login credentials
+   - Backend validates and generates JWT
+   - Frontend stores token for subsequent requests
+
+2. Booking Flow:
+   - User browses available guest houses
+   - Selects room and dates
+   - System checks availability
+   - Confirms booking
+   - Updates room status
+
+3. Room Management Flow:
+   - Admin creates/updates rooms
+   - Sets bed configurations
+   - Manages availability status
+   - Updates pricing
+
+## API Endpoints
+
+### Authentication
+- POST /api/auth/login
+- POST /api/auth/register
+- POST /api/auth/logout
+
+### Hotels
+- GET /api/hotels
+- GET /api/hotels/{id}
+- POST /api/hotels
+- PUT /api/hotels/{id}
+- DELETE /api/hotels/{id}
+
+### Rooms
+- GET /api/rooms
+- GET /api/rooms/{id}
+- POST /api/rooms
+- PUT /api/rooms/{id}
+- DELETE /api/rooms/{id}
+
+### Bookings
+- GET /api/bookings
+- GET /api/bookings/{id}
+- POST /api/bookings
+- PUT /api/bookings/{id}
+- DELETE /api/bookings/{id}
+
+## Key Features
+
+1. User Management:
+   - User registration and authentication
+   - Role-based access control
+   - Profile management
+
+2. Hotel Management:
+   - Hotel listing and details
+   - Room configuration
+   - Availability management
+
+3. Booking System:
+   - Real-time availability checking
+   - Booking confirmation
+   - Booking history
+
+4. Room Management:
+   - Bed configuration
+   - Room status tracking
+   - Pricing management
+
+## Security Features
+
+1. Authentication:
+   - JWT-based authentication
+   - Token expiration and refresh
+   - Secure password handling
+
+2. Authorization:
+   - Role-based access control
+   - Protected routes
+   - API endpoint security
+
+3. Data Security:
+   - Input validation
+   - XSS protection
+   - CSRF protection
+
+## Error Handling
+
+1. Frontend:
+   - User-friendly error messages
+   - Loading states
+   - Form validation
+   - Network error handling
+
+2. Backend:
+   - Global exception handling
+   - Validation errors
+   - Business logic exceptions
+   - Database error handling
+
+## Performance Optimizations
+
+1. Frontend:
+   - Lazy loading of modules
+   - Caching strategies
+   - Optimized asset loading
+   - Responsive design
+
+2. Backend:
+   - Connection pooling
+   - Query optimization
+   - Caching mechanisms
+   - Efficient data transfer
+
+## Deployment
+
+1. Frontend Deployment:
+   - Build optimization
+   - Environment configuration
+   - Static file serving
+
+2. Backend Deployment:
+   - Server configuration
+   - Database setup
+   - Environment variables
+   - Logging setup
+
+## Future Enhancements
+
+1. Planned Features:
+   - Payment integration
+   - Review system
+   - Advanced search filters
+   - Mobile application
+
+2. Technical Improvements:
+   - Real-time notifications
+   - Analytics dashboard
+   - Performance monitoring
+   - Automated testing
+
+## Maintenance
+
+1. Regular Tasks:
+   - Database backups
+   - Log monitoring
+   - Security updates
+   - Performance monitoring
+
+2. Troubleshooting:
+   - Common issues and solutions
+   - Debug procedures
+   - Support contacts
+
+## Version History
+
+Current Version: 1.0
+- Initial release with core booking functionality
+- User authentication and authorization
+- Basic hotel and room management
+- Booking system implementation

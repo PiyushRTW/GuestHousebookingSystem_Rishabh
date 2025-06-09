@@ -35,6 +35,8 @@ export class AuthService {
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   private tokenRefreshTimeout: any;
   redirectUrl: string | null = null;
+  private userRoleSubject = new BehaviorSubject<string | null>(localStorage.getItem('userRole'));
+  userRole$ = this.userRoleSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -171,6 +173,7 @@ export class AuthService {
     };
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     this.currentUserSubject.next(user);
+    this.userRoleSubject.next(user.role);
   }
 
   private storeToken(token: string): void {
@@ -178,6 +181,7 @@ export class AuthService {
     const user = this.getUserFromStorage();
     if (user) {
       this.currentUserSubject.next(user);
+      this.userRoleSubject.next(user.role);
     }
   }
 
@@ -237,6 +241,7 @@ export class AuthService {
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
     this.refreshTokenSubject.next(null);
+    this.userRoleSubject.next(null);
   }
 
   private handleError(error: HttpErrorResponse) {
@@ -284,6 +289,22 @@ export class AuthService {
       const updatedUserData = { ...currentUser, ...updatedUser };
       localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
       this.currentUserSubject.next(updatedUserData);
+      this.userRoleSubject.next(updatedUserData.role);
     }
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, {
+      token,
+      newPassword
+    });
+  }
+
+  validateResetToken(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/validate-reset-token/${token}`);
   }
 }
